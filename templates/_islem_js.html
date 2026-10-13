@@ -1,0 +1,106 @@
+<script>
+(function(){
+  function kucuk(x){ return x.toLocaleLowerCase('tr-TR'); }
+  function kur(root){
+    var input=root.querySelector('.is-input'), sik=root.querySelector('.sik-serit'), secilen=root.querySelector('.secilen'), oneri=root.querySelector('.oneri');
+    var ara=root.querySelector('.is-ara'), yok=root.querySelector('.is-yok'), hataEl=root.querySelector('.is-hata');
+    var kats=Array.prototype.slice.call(root.querySelectorAll('.kat')), ozelKat=root.querySelector('.ozel-kat'), ozelListe=root.querySelector('.ozel-liste');
+    var chipler=Array.prototype.slice.call(root.querySelectorAll('[data-chip]'));
+    function liste(){ return input.value.split(',').map(function(x){return x.trim();}).filter(Boolean); }
+    function yaz(l){ input.value=l.join(', '); durum(); }
+    function rozet(el,n){ el.textContent=n; el.classList.toggle('d-none',!n); }
+    function hata(m){ hataEl.textContent=m||''; hataEl.classList.toggle('d-none',!m); }
+    function etiketler(){
+      var l=liste(); secilen.innerHTML=''; secilen.classList.toggle('d-none',!l.length);
+      l.forEach(function(t,i){
+        var b=document.createElement('button'); b.type='button'; b.className='btn btn-primary btn-sm rounded-pill'; b.setAttribute('aria-label',t+' sil');
+        b.textContent=t+'  ✕'; b.addEventListener('click',function(){ var x=liste(); x.splice(i,1); yaz(x); });
+        secilen.appendChild(b);
+      });
+    }
+    function durum(){
+      var l=liste().map(kucuk);
+      chipler.forEach(function(b){
+        var on=l.indexOf(kucuk(b.dataset.chip))!==-1;
+        b.classList.toggle('btn-primary',on); b.classList.toggle('btn-outline-secondary',!on); b.setAttribute('aria-pressed',on?'true':'false');
+      });
+      kats.forEach(function(k){ rozet(k.querySelector('.kat-sayi'),k.querySelectorAll('.btn-primary').length); });
+      etiketler();
+    }
+    function filtrele(){
+      var q=kucuk(ara.value.trim()), hic=true;
+      kats.forEach(function(k){
+        var v=false;
+        k.querySelectorAll('[data-chip]').forEach(function(b){ var ok=!q||kucuk(b.dataset.chip).indexOf(q)!==-1; b.classList.toggle('d-none',!ok); if(ok) v=true; });
+        k.classList.toggle('d-none',!v && !(k===ozelKat&&!q&&k.querySelector('[data-chip]'))); if(q&&v) k.open=true; if(v) hic=false;
+      });
+      yok.classList.toggle('d-none',!(q&&hic));
+    }
+    ara.addEventListener('input',filtrele);
+    var duzenleBtn=root.querySelector('.ozel-duzenle'), ozelIpucu=root.querySelector('.ozel-ipucu');
+    function sil(b){
+      var t=b.dataset.chip;
+      if(!window.confirm('“'+t+'” listenden silinsin mi?')) return;
+      fetch(root.dataset.ekle.replace('islem-ekle','islem-sil'),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':root.dataset.csrf},body:JSON.stringify({ad:t})})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(!d.ok){ hata(d.hata||'Silinemedi.'); return; }
+          var i=chipler.indexOf(b); if(i>-1) chipler.splice(i,1); b.remove();
+          if(!ozelListe.querySelector('[data-chip]')){ ozelKat.classList.remove('duzenle-modu'); if(ozelIpucu) ozelIpucu.classList.add('d-none'); if(duzenleBtn) duzenleBtn.classList.add('d-none'); }
+          filtrele(); hata('');
+        })
+        .catch(function(){ hata('Bağlantı hatası, tekrar dene.'); });
+    }
+    if(duzenleBtn) duzenleBtn.addEventListener('click',function(){
+      var a=ozelKat.classList.toggle('duzenle-modu');
+      duzenleBtn.textContent=a?'✔ Bitti':'✎ Listemi düzenle'; if(ozelIpucu) ozelIpucu.classList.toggle('d-none',!a);
+      Array.prototype.forEach.call(ozelListe.querySelectorAll('[data-chip]'),function(c){ c.classList.toggle('btn-outline-danger',a); c.classList.toggle('btn-outline-secondary',!a); });
+    });
+    function tikla(b){
+      if(ozelKat.classList.contains('duzenle-modu') && ozelListe.contains(b)){ sil(b); return; }
+      var t=b.dataset.chip, l=liste(), k=l.map(kucuk).indexOf(kucuk(t));
+      if(k===-1) l.push(t); else l.splice(k,1);
+      yaz(l); hata('');
+    }
+    chipler.forEach(function(b){ b.addEventListener('click',function(){ tikla(b); }); });
+    function adlar(){ var m={}; chipler.forEach(function(b){ m[kucuk(b.dataset.chip)]=b.dataset.chip; }); return Object.keys(m).map(function(k){return m[k];}); }
+    function son(){ var p=input.value.split(','); return p[p.length-1].trim(); }
+    function yerles(ad){ var p=input.value.split(','); p[p.length-1]=' '+ad; yaz(p.map(function(x){return x.trim();}).filter(Boolean)); input.focus(); oneri.classList.add('d-none'); }
+    function oneriGoster(){
+      var q=kucuk(son()); oneri.innerHTML='';
+      if(q.length<2){ oneri.classList.add('d-none'); return; }
+      var secili=liste().slice(0,-1).map(kucuk), n=0, tam=false;
+      adlar().forEach(function(ad){
+        var k=kucuk(ad); if(k===q) tam=true;
+        if(n>=6||k.indexOf(q)===-1||secili.indexOf(k)!==-1) return; n++;
+        var b=document.createElement('button'); b.type='button'; b.className='list-group-item list-group-item-action py-3'; b.textContent=ad;
+        b.addEventListener('mousedown',function(e){ e.preventDefault(); }); b.addEventListener('click',function(){ yerles(ad); }); oneri.appendChild(b);
+      });
+      if(!tam&&son().length>=3){
+        var e=document.createElement('button'); e.type='button'; e.className='list-group-item list-group-item-action py-3 fw-semibold text-primary'; e.textContent='➕ “'+son()+'” listeye ekle';
+        e.addEventListener('mousedown',function(ev){ ev.preventDefault(); }); e.addEventListener('click',function(){ ekle(son()); }); oneri.appendChild(e);
+      }
+      oneri.classList.toggle('d-none',!oneri.children.length);
+    }
+    function ekle(ad){
+      fetch(root.dataset.ekle,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':root.dataset.csrf},body:JSON.stringify({ad:ad})})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(!d.ok){ hata(d.hata||'Eklenemedi.'); return; }
+          if(!chipler.some(function(b){return kucuk(b.dataset.chip)===kucuk(d.ad);})){
+            var b=document.createElement('button'); b.type='button'; b.className='btn btn-outline-secondary chip'; b.dataset.chip=d.ad; b.setAttribute('aria-pressed','false'); b.textContent=d.ad;
+            b.addEventListener('click',function(){ tikla(b); });
+            ozelListe.appendChild(b); ozelKat.classList.remove('d-none'); if(duzenleBtn) duzenleBtn.classList.remove('d-none'); chipler.push(b);
+          }
+          yerles(d.ad); hata('');
+        })
+        .catch(function(){ hata('Bağlantı hatası, tekrar dene.'); });
+    }
+    input.addEventListener('input',function(){ durum(); oneriGoster(); });
+    input.addEventListener('blur',function(){ setTimeout(function(){ oneri.classList.add('d-none'); },150); });
+    input.addEventListener('keydown',function(e){ if(e.key==='Enter'){ var f=oneri.querySelector('button'); if(f&&!oneri.classList.contains('d-none')){ e.preventDefault(); f.click(); } } });
+    durum();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-islem-secici]'),kur);
+})();
+</script>

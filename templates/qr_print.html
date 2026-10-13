@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Etiket · {{a.plaka|plaka_goster}}{% endblock %}
+{% block content %}
+<style>
+.et-w{max-width:560px;margin:0 auto;padding-bottom:90px}
+.et-card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(15,23,42,.07);margin-bottom:12px}
+.et-pl{font:800 1.6rem/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em;color:#0b1f3a;white-space:nowrap}
+.et-chip{display:inline-flex;gap:7px;align-items:center;padding:7px 14px;border-radius:99px;font-size:.88rem;font-weight:600;white-space:nowrap}
+.et-chip.ok{background:#dcfce7;color:#166534}.et-chip.bad{background:#fee2e2;color:#991b1b}.et-chip.bek{background:#e2e8f0;color:#475569}
+.et-lbl{font-size:.72rem;letter-spacing:.12em;color:#64748b;text-transform:uppercase;margin:14px 2px 6px}
+.et-prev{display:block;margin:auto;max-width:100%;image-rendering:pixelated;border:1px solid #cbd5e1;background:#fff}
+.et-dev{border:0;border-radius:18px;background:#fbbf24;color:#1e1b0b;font-weight:800;font-size:1.2rem;padding:22px 8px;width:100%;line-height:1.25}
+.et-dev:disabled{opacity:.6}
+.et-dev small{display:block;font-weight:600;font-size:.8rem;opacity:.8;margin-top:3px}
+.et-bt{border:0;border-radius:16px;background:#14325c;color:#fff;font-weight:700;padding:14px 8px;line-height:1.25}.et-bt small{display:block;font-weight:500;font-size:.78rem;opacity:.8}
+.et-out{display:flex;align-items:center;justify-content:center;border:2px solid #14325c;border-radius:16px;background:#fff;color:#14325c;font-weight:700;text-decoration:none;padding:12px;text-align:center}
+.et-ad{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:14px}
+.et-ad button{width:52px;height:48px;border:2px solid #cbd5e1;border-radius:12px;background:#fff;font-size:1.5rem;font-weight:700}
+.et-ad b{font-size:1.7rem;min-width:30px;text-align:center}
+.et-sonuc{display:none;margin-top:12px;border-radius:14px;padding:13px 15px;font-weight:600}
+.et-sonuc.ok{display:block;background:#dcfce7;color:#166534}.et-sonuc.bad{display:block;background:#fee2e2;color:#991b1b}
+.et-yeni{background:#fff;border:2px solid #86efac;border-radius:18px;text-align:center;padding:18px 12px;margin-bottom:12px}
+.et-yeni .t{font-size:2.6rem;line-height:1}.et-yeni .pl{font:800 2rem/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:#0b1f3a;margin-top:6px}
+@media print{body>*:not(#bt-alan){display:none!important}#bt-alan{display:block!important}#bt-alan img{display:block;page-break-after:always;break-after:page;image-rendering:pixelated}#bt-alan img:last-child{page-break-after:auto;break-after:auto}html,body{margin:0!important;padding:0!important;background:#fff!important}}
+#bt-alan{display:none}
+</style>
+<div class="et-w pt-3">
+{% if yeni %}<div class="et-yeni"><div class="t">✅</div><div class="pl">{{a.plaka|plaka_goster}}</div><div class="text-muted">Yeni araç ve iş emri kaydedildi · etiketi yapıştırın</div></div>{% endif %}
+
+<div class="et-card d-flex justify-content-between align-items-center gap-2">
+  <div>{% if not yeni %}<div class="et-pl">{{a.plaka|plaka_goster}}</div>{% endif %}<div class="{{'fw-semibold' if yeni else 'text-muted'}}">{{a.ad_soyad}}{% if a.marka or a.model %} · {{a.marka or ''}} {{a.model or ''}}{% endif %}</div></div>
+  <span id="durum" class="et-chip bek">● Kontrol ediliyor…</span>
+</div>
+
+<div class="et-lbl">Etiket önizleme</div>
+<div class="et-card" style="padding:12px"><img id="onizleme" class="et-prev" src="{{url_for('arac_etiket_onizleme',arac_id=a.id)}}" alt="Etiket önizleme"></div>
+
+<button id="bas" type="button" class="et-dev">🖨️ Yazıcıdan Çıkart (USB)<small>58 × 40 mm · kablolu, tek dokunuş</small></button>
+<div class="d-flex gap-2 align-items-stretch mt-2">
+  <button id="bt" type="button" class="et-bt" style="flex:1">📲 Bluetooth Yazdır<small>telefondan</small></button>
+  <a class="et-out" style="flex:1" href="{{url_for('arac_qr_png',arac_id=a.id)}}" download="{{a.plaka}}_qr.png">⬇️ QR İndir</a>
+</div>
+<div class="et-ad"><span class="text-muted">Adet</span><button type="button" id="eksi" aria-label="Azalt">−</button><b id="adet">1</b><button type="button" id="arti" aria-label="Artır">+</button></div>
+<div id="sonuc" class="et-sonuc" role="status"></div>
+
+{% if yeni %}<a class="btn btn-outline-secondary btn-lg w-100 mt-3" href="{{url_for('is_emirleri')}}">Şimdi değil, işe devam</a>{% else %}<a class="btn btn-outline-secondary w-100 mt-3" href="{{url_for('araclar')}}">← Araçlara dön</a>{% endif %}
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var T={{csrf_token()|tojson}}, ID={{a.id}}, adet=1, yaziyor=false;
+  var $=function(i){return document.getElementById(i)};
+  function post(url,data){
+    var b=new URLSearchParams(data||{}); b.append('csrf_token',T);
+    return fetch(url,{method:'POST',headers:{'X-Requested-With':'fetch','X-CSRF-Token':T,'Accept':'application/json'},body:b,credentials:'same-origin'})
+      .then(function(r){return r.json().catch(function(){return {ok:false,mesaj:'Oturum süresi dolmuş olabilir; sayfayı yenileyin.'}})});
+  }
+  function sonuc(ok,m){var s=$('sonuc');s.className='et-sonuc '+(ok?'ok':'bad');s.textContent=(ok?'✅ ':'⛔ ')+m}
+  function durum(){
+    fetch('{{url_for("yazici_durum")}}',{credentials:'same-origin',headers:{'Accept':'application/json'}}).then(function(r){return r.json()}).then(function(d){
+      var c=$('durum'); var ok=(d.durum==='hazir'||d.durum==='kuru');
+      c.className='et-chip '+(ok?'ok':'bad'); c.textContent=(ok?'● ':'● ')+(d.durum==='hazir'?'Hazır':d.durum==='kuru'?'Deneme modu':d.durum==='yok'?'Yazıcı bağlı değil':'Yazıcı izni yok'); c.title=d.mesaj||'';
+    }).catch(function(){var c=$('durum');c.className='et-chip bek';c.textContent='● Durum alınamadı'});
+  }
+  durum(); setInterval(durum,15000);
+  $('eksi').onclick=function(){adet=Math.max(1,adet-1);$('adet').textContent=adet};
+  $('arti').onclick=function(){adet=Math.min(20,adet+1);$('adet').textContent=adet};
+  $('bas').onclick=function(){
+    if(yaziyor)return; yaziyor=true; var b=$('bas'); b.disabled=true; var eski=b.innerHTML; b.innerHTML='⏳ Gönderiliyor…';
+    post('{{url_for("arac_yazdir",arac_id=a.id)}}',{adet:adet}).then(function(d){sonuc(d.ok,d.mesaj)}).catch(function(){sonuc(false,'Sunucuya ulaşılamadı. İnterneti/Pi bağlantısını kontrol edin.')})
+      .then(function(){yaziyor=false;b.disabled=false;b.innerHTML=eski;durum()});
+  };
+  $('bt').onclick=function(){
+    var r={w:58,h:40}, u='{{url_for("arac_etiket_onizleme",arac_id=a.id)}}?bt=1', old=$('bt-alan'); if(old)old.remove();
+    var st=$('pg')||document.head.appendChild(Object.assign(document.createElement('style'),{id:'pg'})); st.textContent='@page{size:'+r.w+'mm '+r.h+'mm;margin:0}';
+    var box=document.createElement('div'); box.id='bt-alan';
+    for(var i=0;i<adet;i++){var im=new Image(); im.src=u; im.style.width=r.w+'mm'; im.style.height=r.h+'mm'; box.appendChild(im)}
+    document.body.appendChild(box);
+    var bekle=box.querySelectorAll('img'),n=bekle.length; bekle.forEach(function(im){im.onload=im.onerror=function(){if(--n===0)setTimeout(function(){window.print()},150)}});
+    sonuc(true,'Yazdırma penceresi açılıyor: yazıcı olarak Bluetooth yazıcını seç ('+r.w+' × '+r.h+' mm, ölçek %100).');
+  };
+})();
+</script>
+{% endblock %}

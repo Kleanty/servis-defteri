@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block content %}
+<h4 class="mb-2">📥 Verileri dışa aktar</h4>
+<p class="small-muted">Dosyalar Excel'de çift tıklayınca açılır (CSV). Muhasebeciye vermek ya da kendi yedeğin için kullanabilirsin. Şu anki kayıtlar indirilir.</p>
+<div class="list-group mb-3">
+  <a class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" href="{{url_for('disa_aktar_csv',tur='is-emirleri')}}">📋 İş emirleri <span class="badge text-bg-secondary">{{say.is_emirleri}}</span></a>
+  <a class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" href="{{url_for('disa_aktar_csv',tur='musteriler')}}">👤 Müşteriler <span class="badge text-bg-secondary">{{say.musteriler}}</span></a>
+  <a class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" href="{{url_for('disa_aktar_csv',tur='araclar')}}">🚗 Araçlar <span class="badge text-bg-secondary">{{say.araclar}}</span></a>
+</div>
+<div class="small-muted">Not: Bu bir yedek değildir (yedek için panelde “Son yedek” satırına bak); geri yükleme için veritabanı yedeği kullanılır.</div>
+<a class="btn btn-outline-secondary mt-3" href="{{url_for('dashboard')}}">← Panel</a>
+{% endblock %}

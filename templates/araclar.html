@@ -1,0 +1,39 @@
+{% extends 'base.html' %}{% from '_form_makro.html' import marka_sec, yakit_sec, sanziman_sec, yil_sec, form_js %}{% block content %}
+<h4 class="mb-3">🚗 Araçlar</h4>
+<form class="mb-3"><div class="input-group input-group-lg"><input class="form-control" name="q" value="{{q}}" placeholder="🔍 Plaka / müşteri / marka ara" autocomplete="off"><button class="btn btn-primary px-4">Ara</button></div></form>
+
+<details class="card mb-4" id="ekle"><summary class="btn btn-outline-primary btn-lg text-start">➕ Yeni araç kaydet</summary><div class="p-3"><form method="post" action="{{url_for('arac_ekle')}}" autocomplete="off">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-2">
+    <div class="col-12 col-md-4"><select class="form-select" name="musteri_id" required><option value="">Müşteri *</option>{% for m in musteri_listesi %}<option value="{{m.id}}">{{m.ad_soyad}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-md-3">
+      <input class="form-control fw-bold" id="plaka-alan" name="plaka" placeholder="Plaka * (35 ABC 123)" required maxlength="14" autocapitalize="characters" spellcheck="false">
+      <div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="ozel_plaka" value="1" id="ozel-alan"><label class="form-check-label small-muted" for="ozel-alan">Özel / yabancı plaka</label></div>
+    </div>
+    <div class="col-6 col-md-3">{{ marka_sec() }}</div>
+    <div class="col-6 col-md-2"><input class="form-control" name="model" placeholder="Model" maxlength="40"></div>
+    <div class="col-4 col-md-2">{{ yil_sec() }}</div>
+    <div class="col-4 col-md-2"><input class="form-control" name="kilometre" inputmode="numeric" placeholder="KM"></div>
+    <div class="col-4 col-md-2">{{ yakit_sec() }}</div>
+    <div class="col-6 col-md-2">{{ sanziman_sec() }}</div>
+    <div class="col-6 col-md-2"><input class="form-control" name="renk" placeholder="Renk" maxlength="30"></div>
+    <div class="col-12 col-md-4"><input class="form-control" name="notlar" placeholder="Not"></div>
+  </div>
+  <button class="btn btn-primary btn-lg w-100 mt-3">Araç Ekle</button>
+</form></div></details>
+
+<div class="row row-cols-1 row-cols-lg-2 g-2 mb-3">{% for a in kayitlar %}
+<div class="col"><div class="card shadow-sm h-100"><div class="card-body">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <div><div class="fs-3 fw-bold lh-1 text-nowrap">{{a.plaka|plaka_goster}}</div><div class="fw-semibold mt-1">{{a.ad_soyad}}</div>
+    <div class="small-muted">{{(a.marka or '')~' '~(a.model or '')}}{% if a.model_yili %} · {{a.model_yili}}{% endif %}{% if a.yakit_tipi %} · {{a.yakit_tipi}}{% endif %}{% if a.kilometre %} · {{'{:,}'.format(a.kilometre).replace(',','.')}} km{% endif %}</div></div>
+    <div class="d-flex gap-1"><a class="btn btn-outline-dark btn-sm" href="{{url_for('arac_qr',arac_id=a.id)}}">🏷️ Etiket</a><a class="btn btn-outline-secondary btn-sm" href="{{url_for('arac_duzenle',arac_id=a.id)}}" aria-label="Düzenle">✏️</a></div>
+  </div>
+  <div class="d-grid gap-2 mt-3" style="grid-template-columns:2fr 1fr 1fr">
+    <a class="btn btn-amber fw-bold" href="{{url_for('is_emirleri',yeni=a.plaka)}}#yeni">📋 İş Emri Aç</a>
+    {% if a.telefon|tel_ara %}<a class="btn btn-outline-primary" href="{{a.telefon|tel_ara}}" aria-label="Ara">📞</a><a class="btn btn-outline-success" target="_blank" rel="noopener" href="{{a.telefon|wa_tel}}" aria-label="WhatsApp">💬</a>{% else %}<span></span><span></span>{% endif %}
+  </div>
+</div></div></div>
+{% else %}<div class="col-12 text-center text-muted py-5 fs-5">Araç yok.</div>{% endfor %}</div>
+{% endblock %}
+{% block scripts %}{{ form_js() }}{% endblock %}

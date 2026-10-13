@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% from '_islem_makro.html' import islem_secici %}{% block content %}
+<h4>📋 İş Emri Düzenle</h4>
+<form method="post" class="card p-3" autocomplete="off">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="geri" value="{{geri or ''}}">
+  <label class="form-label" for="arac_id">Araç</label>
+  <select class="form-select mb-2" id="arac_id" name="arac_id">{% for a in arac_listesi %}<option value="{{a.id}}" {% if a.id==i.arac_id %}selected{% endif %}>{{a.plaka}} — {{a.ad_soyad}}</option>{% endfor %}</select>
+  <div class="row g-2">
+    <div class="col-md-4"><label class="form-label" for="gelis_at">Geliş</label><input class="form-control" id="gelis_at" type="datetime-local" name="gelis_at" value="{{i.gelis_at|replace(' ','T') if i.gelis_at else ''}}"></div>
+    <div class="col-md-2"><label class="form-label" for="giris_km">Giriş KM</label><input class="form-control" id="giris_km" name="giris_km" inputmode="numeric" value="{{i.giris_km or ''}}"></div>
+    <div class="col-md-4"><label class="form-label" for="gidis_at">Gidiş</label><input class="form-control" id="gidis_at" type="datetime-local" name="gidis_at" value="{{i.gidis_at|replace(' ','T') if i.gidis_at else ''}}"></div>
+    <div class="col-md-2"><label class="form-label" for="durum">Durum</label><select class="form-select" id="durum" name="durum">{% for d in durum_secenekleri %}<option {% if d==i.durum %}selected{% endif %}>{{d}}</option>{% endfor %}</select></div>
+  </div>
+  {{ islem_secici('gelis_nedeni', i.gelis_nedeni, 'Geliş nedeni', sik_islemler, ozel_islemler, islem_kategorileri, url_for('api_islem_ekle'), csrf_token()) }}
+  {{ islem_secici('yapilan_islem', i.yapilan_islem, 'Yapılan işlem', sik_islemler, ozel_islemler, islem_kategorileri, url_for('api_islem_ekle'), csrf_token(), 'Yapılan işlemi yaz…') }}
+  <label class="form-label" for="notlar">Not</label>
+  <textarea class="form-control" id="notlar" name="notlar" rows="2" placeholder="Not (isteğe bağlı)">{{i.notlar or ''}}</textarea>
+  <div class="small-muted mt-2">Oluşturma: {{i.olusturuldu_at|zaman}} · Son düzenleme: {{i.guncellendi_at|zaman}}</div>
+  <div class="d-flex gap-2 mt-2"><button class="btn btn-primary btn-lg flex-fill">Kaydet</button><a class="btn btn-outline-secondary btn-lg" href="{{geri or url_for('is_emirleri')}}">Vazgeç</a></div>
+</form>
+{% include '_islem_js.html' %}{% endblock %}
