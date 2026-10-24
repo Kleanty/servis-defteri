@@ -1,0 +1,46 @@
+SERVIS DEFTERI - ALAN ADINI (alanadiniz.com) BAGLAMA
+===================================================
+Amac: Musteriler ve etiketlerdeki QR kod https://alanadiniz.com adresinden siteye ulassin.
+Hosting gerekmez. Dukkandaki bilgisayar sunucu olur, Cloudflare (ucretsiz) adresi ona baglar.
+Sira onemli: 1 -> 2 -> 3. Once SERVIS-DEFTERI-KUR.bat ile kurulum bitmis olmali. alanadiniz.com yazan her yere kendi alan adini yaz.
+
+ADIM 1 - Cloudflare'e domain'i ekle (evden de yapilabilir)
+  a) cloudflare.com -> ucretsiz hesap ac -> "Add a site" -> alanadiniz.com yaz -> Free (ucretsiz) plani sec.
+  b) Cloudflare sana IKI nameserver adresi verir (ornek: xxx.ns.cloudflare.com). Bir kenara yaz.
+  c) Domain'i aldigin firmanin panelinde: domain -> Nameserver / DNS sunuculari ayari.
+     Eski nameserver'lari sil, Cloudflare'in verdigi ikisini yaz, kaydet.
+  d) Cloudflare'de domain "Active" yazana kadar bekle (birkac saat surebilir, bazen daha uzun).
+
+ADIM 2 - Tunel olustur (DUKKANDAKI bilgisayarda yap)
+  a) Cloudflare paneli -> Zero Trust -> Networks -> Tunnels -> "Create a tunnel" -> "Cloudflared".
+     (Menu adlari zamanla degisebilir; "Tunnel" kelimesini ara. Zero Trust ilk acilista
+      odeme karti isteyebilir; ucretsiz plan secilir, ekrandaki aciklamaya bak.)
+  b) Isletim sistemi: Windows. Ekranda bir kurulum komutu cikar.
+     Baslat menusunde "PowerShell"e SAG TIK -> "Yonetici olarak calistir" -> komutu yapistir -> Enter.
+  c) Tunel "Connected / HEALTHY" gorunene kadar bekle.
+
+ADIM 3 - Tunele adresi bagla
+  Tunelde "Public hostname" ekle:
+     Subdomain : (bos birak)
+     Domain    : alanadiniz.com
+     Service   : Type = HTTP , URL = localhost:5000
+  Istersen ikinci bir tane daha ekle:  Subdomain = www , Domain = alanadiniz.com , ayni servis.
+  Kaydet. Tarayicida https://alanadiniz.com acilmali (Servis Defteri sitesi gorunur).
+  Acilmiyorsa: bilgisayar acik mi, uygulama calisiyor mu (http://localhost:5000 acilmali), tunel HEALTHY mi kontrol et.
+
+ADIM 4 - Uygulamaya adresi tanit (SADECE site acildiktan SONRA)
+  *** DIKKAT: Bunu ADIM 3'te site https://alanadiniz.com adresinde acildiktan sonra yap. ***
+  Once yazarsan, o arada basilan etiketlerin QR kodu acilmayan bir adrese gider. PUBLIC_BASE_URL simdilik bos kalsin.
+  C:\ServisDefteri\.env dosyasini Not Defteri'nde ac ve su satiri yaz:
+      PUBLIC_BASE_URL=https://alanadiniz.com
+  Kaydet, kapat, sonra windows\YENIDEN-BASLAT.bat dosyasini "Yonetici olarak calistir".
+  Test: panelden bir etiket cikar, telefonla QR'i okut: arac sayfasi acilmali.
+
+NOT: Tunel (Adim 3) tamamlanmadan basilan etiketlerdeki QR, site acilana kadar calismaz.
+Site acilmadan etiket basacaksan PUBLIC_BASE_URL satiri bos kalsin.
+
+SORUN GIDERME
+  - "Bu site ulasilamiyor" : tunel HEALTHY degil veya bilgisayar kapali/uykuda. Uyku ayarini "Hicbir zaman" yap.
+  - Cloudflare 502/1033 hatasi : uygulama calismiyor. http://localhost:5000 acilmiyorsa
+    windows\YENIDEN-BASLAT.bat dosyasini yonetici olarak calistir.
+  - Domain "Active" olmuyor : alan adi firmasindaki nameserver degisikligi tamamlanmamis; yazdiklarini Cloudflare'inkilerle karsilastir.

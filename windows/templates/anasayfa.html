@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{% set site=public_base or request.url_root.rstrip('/') %}
+<title>{{isletme.ad}} · Tamir, Bakım, Servis, Yedek Parça</title>
+<meta name="description" content="{{isletme.aciklama}}">
+<meta name="theme-color" content="#141615">
+<meta property="og:title" content="{{isletme.ad}} · Tamir, Bakım, Servis, Yedek Parça">
+<meta property="og:description" content="{{isletme.aciklama}}">
+<meta property="og:image" content="{{site}}/static/og-image.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="/static/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/static/favicon-96.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+{% set ld={'@context':'https://schema.org','@type':'AutoRepair','name':isletme.ad,'url':site} %}{% if isletme.tel_uluslararasi %}{% set _=ld.update({'telephone':'+'~isletme.tel_uluslararasi}) %}{% endif %}{% if isletme.adres %}{% set _=ld.update({'address':isletme.adres}) %}{% endif %}
+<script type="application/ld+json">{{ld|tojson}}</script>
+<style>*{box-sizing:border-box;margin:0}html{scroll-behavior:smooth}body{font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
+a{color:inherit;text-decoration:none}svg{flex:none}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));z-index:50}
+.bar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.78rem;font-weight:700;padding:8px 4px;border-radius:12px}
+@media(min-width:820px){.bar{display:none}body{padding-bottom:0}}
+.w{max-width:1040px;margin:0 auto;padding:0 20px}
+footer{text-align:center;font-size:.8rem;padding:28px 16px 20px;opacity:.8}footer a.giris{display:inline-flex;gap:6px;align-items:center;margin-top:10px;padding:9px 16px;border:1px solid currentColor;border-radius:99px;opacity:.85;font-weight:600}
+.rozet{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-size:.85rem;font-weight:600;padding:6px 14px;border-radius:99px}
+.rozet:before{content:"";width:8px;height:8px;border-radius:50%;background:#9ca3af}.rozet.on:before{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.25)}.rozet.off:before{background:#ef4444}
+iframe{border:0;width:100%;height:100%;display:block}
+body{background:#f1f5f9;color:#0f172a}
+.top{background:linear-gradient(160deg,#141615,#2b3037);color:#fff;border-radius:0 0 36px 36px;padding-bottom:36px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:20px;max-width:1040px;margin:auto}
+.logo{font-weight:800;letter-spacing:.16em;white-space:nowrap}.logo-chip{display:inline-flex;background:transparent;border-radius:0;padding:0}.logo-chip img{height:46px;width:auto;display:block}.logo span.amb{color:#ff5a4f}.logo{display:flex;align-items:center;gap:10px;font-family:Georgia,"Times New Roman",serif}.logo-chip img{height:54px}.hero-logo{height:170px;width:auto;display:block;margin:0 auto}
+.rozet{background:rgba(255,255,255,.12);color:#fff}
+.hero{max-width:1040px;margin:auto;padding:30px 20px 10px;text-align:center}
+.hero h1{font-size:clamp(2.1rem,7vw,3.8rem);line-height:1.1;font-weight:800;letter-spacing:-.02em;margin:20px 0 14px}.hero h1 em{font-style:normal;color:#fbbf24}
+.hero p.sabit{margin:14px auto 0;font-size:.95rem}.hero p.sabit a{color:#fbbf24;font-weight:700;text-decoration:underline}
+.gpuan{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:8px 16px;border-radius:99px;background:rgba(255,255,255,.12);color:#fff;font-size:.9rem;font-weight:600}.gpuan i{font-style:normal;color:#fbbf24;letter-spacing:2px}
+.hero p{color:#cbd5e1;max-width:520px;margin:0 auto 28px;font-size:1.08rem}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.cta a{padding:15px 26px;border-radius:14px;font-weight:700;display:inline-flex;gap:10px;align-items:center}
+.b1{background:#fbbf24;color:#1e1b0b}.b2{background:rgba(255,255,255,.12);color:#fff}
+.sec{padding:60px 0 10px}h2{text-align:center;font-size:1.8rem;margin-bottom:28px;letter-spacing:-.02em}
+.g{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.s{background:#fff;border-radius:22px;padding:26px;box-shadow:0 8px 28px rgba(15,23,42,.06)}.s .no{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#fef3c7;color:#b45309;font-weight:800;font-size:.9rem}.s h3{margin:14px 0 6px;font-size:1.15rem}.s p{color:#64748b;font-size:.95rem}
+.hak{background:#fff;border-radius:28px;padding:34px 28px;box-shadow:0 8px 28px rgba(15,23,42,.06);text-align:center;max-width:760px;margin:60px auto 0}.hak p{color:#475569;margin-top:12px}
+.ic{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:stretch}
+.kt{background:#fff;border-radius:22px;padding:26px;box-shadow:0 8px 28px rgba(15,23,42,.06)}
+.sat{display:flex;gap:14px;margin-bottom:20px}.sat i{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#e0e7ff;color:#1d4ed8;flex:none}.sat b{display:block}.sat span{color:#64748b}
+.ara1,.ara2{display:flex;justify-content:center;gap:10px;align-items:center;padding:14px;border-radius:14px;font-weight:700;margin-bottom:10px}.ara1{background:#fbbf24;color:#1e1b0b}.ara2{background:#e2e8f0;color:#0f172a}
+.yor{display:flex;justify-content:center;gap:10px;align-items:center;padding:14px;border-radius:14px;background:#0f172a;color:#fff;font-weight:700}
+.yrm{margin-top:0}.puan-b{font-size:3.6rem;font-weight:800;line-height:1}.yild{color:#f59e0b;font-size:1.6rem;letter-spacing:4px;margin:6px 0}.yrm .cta{margin-top:18px}.yrm .b1{background:#0f172a;color:#fff}
+.hrt{min-height:320px;border-radius:22px;overflow:hidden;background:#e2e8f0}
+.bar{background:#fff;box-shadow:0 -4px 20px rgba(15,23,42,.1)}.bar a{background:#f1f5f9}.bar a:first-child{background:#141615;color:#fff}
+@media(max-width:560px){.d-name{display:none}.hero-logo{height:130px}}
+@media(max-width:430px){.rozet{font-size:.74rem;padding:5px 10px;gap:6px}.logo{letter-spacing:.1em;font-size:.95rem}.nav{padding:16px 14px}}</style>
+</head>
+<body>
+<div class="top">
+<header class="nav">
+<div class="logo">{% if logo %}<span class="logo-chip"><img src="{{logo}}" alt="{{isletme.ad}}"></span><span class="d-name">{{isletme.ad_html}}</span>{% else %}{{isletme.ad_html}}{% endif %}</div>
+{% if isletme.tel_uluslararasi %}<a class="rozet" href="tel:+{{isletme.tel_uluslararasi}}" data-acik data-acilis="{{isletme.acilis}}" data-kapanis="{{isletme.kapanis}}" data-dilim="{{isletme.saat_dilimi}}"><span>Açık mı?</span></a>{% else %}<span class="rozet" data-acik data-acilis="{{isletme.acilis}}" data-kapanis="{{isletme.kapanis}}" data-dilim="{{isletme.saat_dilimi}}"><span>Açık mı?</span></span>{% endif %}
+</header>
+<section class="hero">
+{% if logo %}<img class="hero-logo" src="{{logo}}" alt="">{% endif %}
+<h1>Aracınız <em>güvenilir ellerde.</em></h1>
+<p>{{isletme.aciklama}}</p>
+{% if isletme.tel_uluslararasi %}<div class="cta">
+<a class="b1" href="tel:+{{isletme.tel_uluslararasi}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>{{ 'Ustayı Ara' if isletme.yetkili else 'Hemen Ara' }} · {{isletme.tel}}</a>
+<a class="b2" href="https://wa.me/{{isletme.tel_uluslararasi}}" target="_blank" rel="noopener"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>WhatsApp</a>
+</div>{% if isletme.tel2 %}<p class="sabit">Sabit hat: <a href="tel:+{{isletme.tel2_uluslararasi}}">{{isletme.tel2}}</a></p>{% endif %}{% endif %}
+{% if isletme.puan %}<a class="gpuan" {% if isletme.yorum_link %}href="{{isletme.yorum_link}}" target="_blank" rel="noopener"{% endif %}><i>★★★★★</i> {{isletme.puan}}{% if isletme.yorum_sayisi %} · {{isletme.yorum_sayisi}} Google yorumu{% endif %}</a>{% endif %}
+</section>
+</div>
+<section class="sec" id="hizmetler">
+<div class="w">
+<h2>Neler yapıyoruz?</h2>
+<div class="g">
+<article class="s"><span class="no">01</span><h3>Araç arıza tespiti ve motor</h3><p>Bilgisayarlı cihazla nokta atışı arıza tespiti. Motor onarımı, triger seti, turbo, enjektör.</p></article>
+<article class="s"><span class="no">02</span><h3>Direksiyon ve süspansiyon</h3><p>Rot-rotil, amortisör, salıncak, alt takım ve direksiyon sistemi onarımı.</p></article>
+<article class="s"><span class="no">03</span><h3>Elektrik</h3><p>Akü, marş, şarj, sensör ve araç elektriği arızalarının tespiti ve onarımı.</p></article>
+<article class="s"><span class="no">04</span><h3>Fren sistemi</h3><p>Balata, disk, kaliper, hidrolik. Güvenliğiniz için ilk seferde doğru teşhis.</p></article>
+<article class="s"><span class="no">05</span><h3>Periyodik bakım</h3><p>Yağ, hava ve kabin filtresi değişimi, sıvı kontrolleri, yol güvenliği için genel kontrol.</p></article>
+<article class="s"><span class="no">06</span><h3>Şanzıman ve debriyaj</h3><p>Debriyaj seti, şanzıman bakımı ve onarımı.</p></article>
+<article class="s"><span class="no">07</span><h3>Yedek parça</h3><p>Aracınız için gereken yedek parçayı temin eder, yerinde takarız.</p></article>
+</div>
+</div>
+</section>
+{% if isletme.adres or isletme.tel or isletme.harita_embed or isletme.harita_link %}
+<section class="sec" id="iletisim">
+<div class="w">
+<h2>İletişim ve konum</h2>
+<div class="ic">
+<div class="kt">
+{% if isletme.adres %}<div class="sat"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 119.5 9a2.5 2.5 0 012.5 2.5z"/></svg></i><div><b>Adres</b><span>{{isletme.adres}}</span></div></div>{% endif %}
+{% if isletme.tel %}<div class="sat"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i><div><b>Telefon</b><span><a href="tel:+{{isletme.tel_uluslararasi}}">{{isletme.tel}}</a>{% if isletme.tel2 %} · <a href="tel:+{{isletme.tel2_uluslararasi}}">{{isletme.tel2}}</a>{% endif %}</span></div></div>{% endif %}
+{% if isletme.eposta %}<div class="sat"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5z"/></svg></i><div><b>E-posta</b><span><a href="mailto:{{isletme.eposta}}">{{isletme.eposta}}</a></span></div></div>{% endif %}
+<div class="sat"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 11h-5V7h2v4h3z"/></svg></i><div><b>Çalışma saatleri</b><span>Her gün {{isletme.acilis}} – {{isletme.kapanis}}</span></div></div>
+{% if isletme.tel_uluslararasi %}<a class="ara1" href="tel:+{{isletme.tel_uluslararasi}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>{{ 'Ustayı Ara' if isletme.yetkili else 'Ara' }}{% if isletme.yetkili %} ({{isletme.yetkili}}){% endif %} · {{isletme.tel}}</a>{% endif %}
+{% if isletme.tel2 %}<a class="ara2" href="tel:+{{isletme.tel2_uluslararasi}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>Sabit hat · {{isletme.tel2}}</a>{% endif %}
+{% if isletme.harita_link %}<a class="yor" href="{{isletme.harita_link}}" target="_blank" rel="noopener"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 119.5 9a2.5 2.5 0 012.5 2.5z"/></svg>Yol tarifi al</a>{% endif %}
+</div>
+{% if isletme.harita_embed %}<div class="hrt"><iframe src="{{isletme.harita_embed}}" loading="lazy" allowfullscreen title="Harita"></iframe></div>{% endif %}
+</div>
+</div>
+</section>
+{% endif %}
+{% if isletme.puan %}
+<section class="sec" id="yorumlar">
+<div class="w">
+<h2>Google yorumları</h2>
+<div class="hak yrm">
+<div class="puan-b">{{isletme.puan}}</div>
+<div class="yild">★★★★★</div>
+<p>{% if isletme.yorum_sayisi %}{{isletme.yorum_sayisi}} Google yorumu{% else %}Google puanı{% endif %} · müşterilerimiz yaptığımız işten memnun.</p>
+{% if isletme.yorum_link %}<div class="cta"><a class="b1" href="{{isletme.yorum_link}}" target="_blank" rel="noopener">Yorumları Google'da oku</a></div>{% endif %}
+</div>
+</div>
+</section>
+{% endif %}
+<footer>© {{ now_yil }} {{isletme.ad}}<br><a class="giris" href="/login"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 8h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zM9 6a3 3 0 016 0v2H9z"/></svg> Servis Yetkilisi Girişi</a></footer>
+{% if isletme.tel_uluslararasi or isletme.harita_link %}<nav class="bar">
+{% if isletme.tel_uluslararasi %}<a href="tel:+{{isletme.tel_uluslararasi}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>{{ 'Ustayı Ara' if isletme.yetkili else 'Ara' }}</a><a href="https://wa.me/{{isletme.tel_uluslararasi}}" target="_blank" rel="noopener"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>WhatsApp</a>{% endif %}
+{% if isletme.harita_link %}<a href="{{isletme.harita_link}}" target="_blank" rel="noopener"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 119.5 9a2.5 2.5 0 012.5 2.5z"/></svg>Yol tarifi</a>{% endif %}
+</nav>{% endif %}
+<script>(function(){var e=document.querySelectorAll('[data-acik]');if(!e.length)return;
+e.forEach(function(x){
+var ac=x.dataset.acilis.split(':'),ka=x.dataset.kapanis.split(':'),a1=+ac[0]*60+(+ac[1]||0),k1=+ka[0]*60+(+ka[1]||0);
+var d=new Date(new Date().toLocaleString('en-US',{timeZone:x.dataset.dilim||'Europe/Istanbul'}));var m=d.getHours()*60+d.getMinutes();var a=m>=a1&&m<k1;
+x.classList.add(a?'on':'off');x.querySelector('span').textContent=a?"Şu an açık · "+x.dataset.kapanis+"'a kadar":"Şu an kapalı · "+x.dataset.acilis+"'da açılır";});})();</script>
+</body></html>

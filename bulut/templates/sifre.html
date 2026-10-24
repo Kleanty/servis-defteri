@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block content %}
+<div style="max-width:420px;margin:0 auto">
+<h4 class="mb-2">🔑 Şifre {{'seç' if gecici else 'değiştir'}}</h4>
+{% if gecici %}<div class="alert alert-warning">Yönetici sana geçici şifre verdi. Devam etmeden önce <b>kendi şifreni seç</b>.</div>{% endif %}
+<form method="post" class="card p-3 shadow-sm border-0"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label class="form-label small text-muted mb-1">{{'Geçici şifre' if gecici else 'Mevcut şifre'}}</label><input class="form-control mb-2" type="password" name="eski" required autocomplete="current-password">
+<label class="form-label small text-muted mb-1">Yeni şifre (en az 8 karakter)</label><input class="form-control mb-2" type="password" name="yeni" required minlength="8" autocomplete="new-password">
+<label class="form-label small text-muted mb-1">Yeni şifre (tekrar)</label><input class="form-control mb-3" type="password" name="yeni2" required minlength="8" autocomplete="new-password">
+<button class="btn btn-primary btn-lg fw-bold">Şifreyi kaydet</button></form>
+{% if not gecici %}<a class="btn btn-outline-secondary w-100 mt-3" href="{{url_for('dashboard')}}">← Panel</a>{% endif %}</div>
+{% endblock %}

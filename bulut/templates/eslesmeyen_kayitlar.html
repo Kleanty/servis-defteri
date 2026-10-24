@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block content %}
+<h4 class="mb-1">🔗 Eşleşmeyen kayıtlar (dış sistemden gelen)</h4>
+<div class="small-muted mb-3">Dış sistemden (ör. muhasebe programı) gelen kayıt tek bir açık iş emriyle güvenle eşleşemedi. Hangi iş emrine ait olduğunu sen seç; hiçbir şey kendiliğinden tahmin edilmez.</div>
+{% for x in liste %}
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <div class="d-flex justify-content-between flex-wrap gap-2"><div class="fs-5 fw-bold">{{x.plaka_goster}}{% if x.v.km %} · {{x.v.km}} km{% endif %}</div><div class="small-muted">{{x.zaman}}</div></div>
+  <div class="text-danger small fw-semibold mb-2">{{x.neden}}</div>
+  <div class="small mb-2">
+    {% if x.v.ad %}<div>Müşteri: {{x.v.ad}}</div>{% endif %}
+    {% if x.v.yapilan %}<div>İşlemler: {{x.v.yapilan}}</div>{% endif %}
+    {% if x.v.durum %}<div>Durum: {{x.v.durum}}</div>{% endif %}
+    {% if x.v.notlar %}<div>Not: {{x.v.notlar}}</div>{% endif %}
+    <div class="small-muted">Kayıt no: {{x.kayit_no}}</div>
+  </div>
+  {% for ad in x.adaylar %}
+  <form method="post" action="{{url_for('eslesmeyen_islem',kayit_no=x.kayit_no,eylem='bagla')}}" class="mb-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="is_emri_id" value="{{ad.id}}">
+    <button class="btn btn-outline-primary w-100 text-start">Bu iş emrine bağla → #{{ad.id}} · {{(ad.gelis_at or '')[:16]}} · {{ad.giris_km or '-'}} km · {{ad.gelis_nedeni or 'işlem yazılmamış'}}</button>
+  </form>
+  {% endfor %}
+  <div class="d-flex gap-2 flex-wrap">
+    <form method="post" action="{{url_for('eslesmeyen_islem',kayit_no=x.kayit_no,eylem='yeni')}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-success" data-confirm="Yeni iş emri açılsın mı?">➕ Yeni iş emri olarak aç</button></form>
+    <form method="post" action="{{url_for('eslesmeyen_islem',kayit_no=x.kayit_no,eylem='yoksay')}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-secondary">Yoksay</button></form>
+  </div>
+</div></div>
+{% else %}<div class="alert alert-success">Bekleyen kayıt yok. 🎉</div>{% endfor %}
+{% endblock %}

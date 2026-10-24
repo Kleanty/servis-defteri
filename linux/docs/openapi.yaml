@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Servis Defteri Entegrasyon API
+  version: "1.1"
+  description: |
+    Servis Defteri'nde açılmış servis (iş emri) kayıtlarını, harici bir sistemden (ör. muhasebe yazılımı) gelen bilgiyle
+    eşleştirmek için makine-makine API'si. Yeni servis kaydı açmaz; plakaya ait tek açık iş emrini bulup ilişkilendirir.
+    Güvenli eşleşme yoksa kaydı insan incelemesine alır (202).
+
+    İstemci notu: isteklere anlamlı bir `User-Agent` başlığı ekleyin (örn. `MuhasebeYazilimi/1.0`). Başlıksız ya da kütüphane varsayılanı
+    kimliklerle gelen istekler önündeki güvenlik duvarınca 403 ile engellenebilir.
+servers:
+  - url: https://alanadiniz.com/api/v1
+security:
+  - bearerAuth: []
+paths:
+  /saglik:
+    get:
+      summary: Sağlık kontrolü
+      security: []
+      responses:
+        "200":
+          description: Servis çalışıyor
+          content:
+            application/json:
+              schema: { type: object, properties: { ok: { type: boolean }, hizmet: { type: string }, surum: { type: integer } } }
+  /is-emirleri:
+    post:
+      summary: Servis kaydı bildirimi (eşleştirme)
+      description: Aynı `kayit_no` tekrar gönderilirse işlem yinelenmez (idempotent).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IsEmri" }
+            example: { kayit_no: "K-10425", plaka: "35 ABC 123", km: 120010, yapilan_islem: "Yağ + filtre", belge_no: "F-55" }
+          application/x-www-form-urlencoded:
+            schema: { $ref: "#/components/schemas/IsEmri" }
+      responses:
+        "200":
+          description: Mevcut iş emriyle eşleşti veya daha önce işlenmişti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Sonuc" }
+              examples:
+                eslesti: { value: { ok: true, tekrar: false, eslesti: true, durum: eslesti, is_emri_id: 12, arac_id: 5 } }
+                tekrar: { value: { ok: true, tekrar: true, durum: eslesti, is_emri_id: 12 } }
+        "202":
+          description: Güvenle eşleşemedi; inceleme kuyruğuna alındı. Yeniden göndermeye gerek yoktur.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Sonuc" }
+              example: { ok: true, tekrar: false, eslesti: false, durum: beklemede, neden: "Bu plakanın açık iş emri yok." }
+        "400": { description: "Düz http ile gelen istek (HTTPS_REQUIRED) ya da bozuk gövde", content: { application/json: { schema: { $ref: "#/components/schemas/Hata" } } } }
+        "401": { description: Geçersiz API anahtarı, content: { application/json: { schema: { $ref: "#/components/schemas/Hata" } } } }
+        "404": { description: Entegrasyon bu sunucuda etkin değil }
+        "422": { description: Eksik veya geçersiz alan, content: { application/json: { schema: { $ref: "#/components/schemas/Hata" } } } }
+        "409": { description: "Çakışma: IDEMPOTENCY_CONFLICT (aynı kayit_no farklı içerikle; otomatik tekrar denemeyin) veya CONFLICT (eş zamanlı işlem; kısa süre sonra tekrar denenebilir)", content: { application/json: { schema: { $ref: "#/components/schemas/Hata" } } } }
+        "403": { description: "Uygulamadan değil, önündeki güvenlik duvarından gelir (gövde JSON değildir). User-Agent başlığı gönderin; sürerse iletişime geçin" }
+        "429": { description: "Çok fazla hatalı anahtar denemesi; Retry-After başlığı saniye cinsinden bekleme süresini verir", headers: { Retry-After: { schema: { type: integer } } }, content: { application/json: { schema: { $ref: "#/components/schemas/Hata" } } } }
+        "500": { description: Sunucu hatası; aynı istek güvenle tekrar denenebilir }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, description: "Alternatif: X-API-Key başlığı" }
+  schemas:
+    IsEmri:
+      type: object
+      required: [plaka]
+      properties:
+        kayit_no: { type: string, maxLength: 64, description: "Karşı sistemdeki kayıt/belge numarası. Yinelenmeyi önler (idempotency anahtarı); önerilir." }
+        plaka: { type: string, example: "35 ABC 123", description: "Boşluk/tire fark etmez. Özel plaka için ozel_plaka=true." }
+        ozel_plaka: { type: boolean }
+        km: { type: integer, description: "Eşleştirmeyi güvenli yapar (varsayılan ±50 km tolerans). Kayıtlı giriş km'sinin yerine geçmez." }
+        yapilan_islem: { oneOf: [ { type: string }, { type: array, items: { type: string } } ], description: "Yapılan işlemler. Karşı sistem son karardır: mevcut 'Yapılan işlem' alanının YERİNE yazılır; eski metin nota 'Önceki işlem: ...' olarak saklanır." }
+        durum: { type: string, enum: [Beklemede, Devam Ediyor, Tamamlandı], description: "Gönderilirse iş emri durumu bu olur. Tamamlandı ise gidiş zamanı yazılır." }
+        gelis_zamani: { type: string, format: date-time, example: "2026-10-22T09:30:00+03:00", description: "ISO 8601. Yalnızca yeni kayıt açılırken kullanılır." }
+        gidis_zamani: { type: string, format: date-time, example: "2026-10-22T17:00:00+03:00", description: "ISO 8601. durum=Tamamlandı ise gidiş zamanı olarak yazılır (yoksa şimdiki zaman)." }
+        musteri_ad: { type: string, maxLength: 100, description: "Yalnızca isimsiz kayıtta (İSİMSİZ) güncellenir." }
+        telefon: { type: string, description: "Yalnızca boşsa tamamlanır. Geçersiz biçim yok sayılır." }
+        eposta: { type: string, maxLength: 120, description: "Yalnızca boşsa tamamlanır. Geçersiz biçim yok sayılır." }
+        adres: { type: string, maxLength: 300, description: "Yalnızca boşsa tamamlanır." }
+        marka: { type: string, maxLength: 40, description: "Yalnızca boşsa tamamlanır." }
+        model: { type: string, maxLength: 40, description: "Yalnızca boşsa tamamlanır." }
+        not: { type: string, maxLength: 1000, description: "İş emri notuna eklenir." }
+    Sonuc:
+      type: object
+      properties:
+        ok: { type: boolean }
+        tekrar: { type: boolean }
+        eslesti: { type: boolean }
+        durum: { type: string, enum: [eslesti, beklemede] }
+        is_emri_id: { type: integer }
+        arac_id: { type: integer }
+        neden: { type: string }
+    Hata:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        kod: { type: string, enum: [HTTPS_REQUIRED, INVALID_API_KEY, VALIDATION_ERROR, RATE_LIMITED, IDEMPOTENCY_CONFLICT, CONFLICT, SERVER_ERROR] }
+        hata: { type: string }

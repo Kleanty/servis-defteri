@@ -1,0 +1,55 @@
+{% extends 'base.html' %}{% from '_form_makro.html' import marka_sec, yakit_sec, sanziman_sec, yil_sec, form_js %}{% block content %}
+{% if musteri %}
+<div class="card mb-3 shadow-sm"><div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <div><div class="small-muted">Müşteri</div><div class="fs-4 fw-bold lh-sm">👤 {{musteri.ad_soyad}}</div>{% if musteri.telefon %}<div class="small-muted">{{musteri.telefon|tel_goster}}</div>{% endif %}</div>
+  <div class="d-flex gap-2 flex-wrap"><a class="btn-mini" href="{{url_for('musteri_duzenle',musteri_id=musteri.id)}}">✏️ Müşteriyi düzenle</a><a class="btn-mini" href="{{url_for('musteriler')}}">← Müşteriler</a><a class="btn-mini" href="{{url_for('araclar')}}">Tüm araçlar</a></div>
+</div></div>
+<h4 class="mb-3">🚗 Araçları <span class="small-muted fw-normal">({{kayitlar|length}})</span></h4>
+{% else %}<h4 class="mb-3">🚗 Araçlar</h4>
+<form class="mb-3"><div class="input-group input-group-lg"><input class="form-control" name="q" value="{{q}}" placeholder="🔍 Plaka / müşteri / marka ara" autocomplete="off"><button class="btn btn-primary px-4">Ara</button></div></form>{% endif %}
+
+<details class="card mb-4" id="ekle" {% if musteri and not kayitlar %}open{% endif %}><summary class="btn btn-outline-primary btn-lg text-start">➕ Yeni araç kaydet</summary><div class="p-3"><form method="post" action="{{url_for('arac_ekle')}}" autocomplete="off">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-2">
+    <div class="col-12 col-md-4"><select class="form-select" name="musteri_id" required><option value="">Müşteri *</option>{% for m in musteri_listesi %}<option value="{{m.id}}" {% if musteri and musteri.id==m.id %}selected{% endif %}>{{m.ad_soyad}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-md-3">
+      <input class="form-control fw-bold" id="plaka-alan" name="plaka" placeholder="Plaka * (35 ABC 123)" required maxlength="14" autocapitalize="characters" spellcheck="false">
+      <div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="ozel_plaka" value="1" id="ozel-alan"><label class="form-check-label small-muted" for="ozel-alan">Özel / yabancı plaka</label></div>
+    </div>
+    <div class="col-6 col-md-3">{{ marka_sec() }}</div>
+    <div class="col-6 col-md-2"><input class="form-control" name="model" placeholder="Model" maxlength="40"></div>
+    <div class="col-4 col-md-2">{{ yil_sec() }}</div>
+    <div class="col-4 col-md-2">{{ yakit_sec() }}</div>
+    <div class="col-6 col-md-2">{{ sanziman_sec() }}</div>
+    <div class="col-6 col-md-2"><input class="form-control" name="renk" placeholder="Renk" maxlength="30"></div>
+    <div class="col-12 col-md-4"><input class="form-control" name="notlar" placeholder="Not"></div>
+  </div>
+  <button class="btn btn-primary btn-lg w-100 mt-3">Araç Ekle</button>
+</form></div></details>
+
+<div class="row row-cols-1 row-cols-lg-2 g-2 mb-3">{% for a in kayitlar %}
+<div class="col"><div class="card shadow-sm h-100"><div class="card-body">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <div><div class="fs-3 fw-bold lh-1 text-nowrap">{{a.plaka|plaka_goster}}</div><div class="fw-semibold mt-1">{{a.ad_soyad}}</div>
+    {% set bilgi=[] %}{% if a.marka or a.model %}{% set _=bilgi.append(((a.marka or '')~' '~(a.model or ''))|trim) %}{% endif %}{% if a.model_yili %}{% set _=bilgi.append(a.model_yili|string) %}{% endif %}{% if a.yakit_tipi %}{% set _=bilgi.append(a.yakit_tipi) %}{% endif %}{% if a.kilometre %}{% set _=bilgi.append('{:,}'.format(a.kilometre).replace(',','.')~' km') %}{% endif %}
+    <div class="small-muted">{{ bilgi|join(' · ') if bilgi else 'Araç bilgisi girilmemiş' }}</div></div>
+    <div class="d-flex gap-2 flex-wrap justify-content-end"><a class="btn-mini" href="{{url_for('arac_qr',arac_id=a.id)}}">🏷️ Etiket</a><a class="btn-mini" href="{{url_for('arac_duzenle',arac_id=a.id)}}">✏️ Düzenle</a></div>
+  </div>
+  <div class="d-grid gap-2 mt-3" style="grid-template-columns:{{ '3fr 1fr 1fr' if a.telefon|tel_ara else '1fr' }}">
+    <a class="btn btn-amber fw-bold" style="min-height:48px" href="{{url_for('is_emirleri',yeni=a.plaka)}}#yeni">📋 İş Emri Aç</a>
+    {% if a.telefon|tel_ara %}<a class="btn btn-outline-primary" href="{{a.telefon|tel_ara}}" aria-label="Ara">📞</a><a class="btn btn-outline-success" target="_blank" rel="noopener" href="{{a.telefon|wa_tel}}" aria-label="WhatsApp">💬</a>{% else %}<span></span><span></span>{% endif %}
+  </div>
+  {% if not musteri %}<a class="btn btn-outline-primary w-100 mt-2" style="min-height:46px;border-radius:12px" href="{{url_for('musteri_duzenle',musteri_id=a.musteri_id)}}">👤 Müşteri Bilgilerine Git</a>{% endif %}
+</div></div></div>
+{% else %}<div class="col-12 text-center text-muted py-5 fs-5">{{ 'Bu müşterinin kayıtlı aracı yok. Yukarıdan araç ekleyebilirsin.' if musteri else 'Araç yok.' }}</div>{% endfor %}</div>
+{% if musteri %}
+<h5 class="mb-2 mt-4">📋 Son iş emirleri <span class="small-muted fw-normal">({{is_say}}{% if is_say>isler|length %} kayıttan son {{isler|length}}{% endif %})</span></h5>
+<div class="list-group mb-4">{% for i in isler %}
+<a class="list-group-item list-group-item-action py-3" href="{{url_for('is_emri_duzenle',is_emri_id=i.id,geri=url_for('araclar',musteri=musteri.id))}}">
+  <div class="d-flex justify-content-between align-items-start gap-2"><span><b class="fs-5">{{i.plaka|plaka_goster}}</b> <span class="small-muted ms-1">{{i.gelis_at|zaman}}{% if i.giris_km %} · {{'{:,}'.format(i.giris_km).replace(',','.')}} km{% endif %}</span></span>
+  <span class="badge {{ 'text-bg-warning' if i.durum!='Tamamlandı' else 'text-bg-success' }}">{{i.durum}}</span></div>
+  <div class="mt-1">{{i.yapilan_islem or i.gelis_nedeni or 'İşlem belirtilmemiş'}}</div></a>
+{% else %}<div class="list-group-item text-muted">Henüz iş emri yok.</div>{% endfor %}</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}{{ form_js() }}{% endblock %}

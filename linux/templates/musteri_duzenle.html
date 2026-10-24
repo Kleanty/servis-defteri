@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% block content %}
+<h4>👤 Müşteri Düzenle</h4>
+<form method="post" class="card p-3" autocomplete="off">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="form-label" for="ad_soyad">Ad soyad</label>
+  <input class="form-control mb-2" id="ad_soyad" name="ad_soyad" value="{{m.ad_soyad}}" placeholder="Boş bırakılırsa İSİMSİZ yazılır" style="text-transform:uppercase" autocapitalize="characters">
+  <label class="form-label" for="telefon">Telefon</label>
+  <input class="form-control mb-2" id="telefon" name="telefon" value="{{m.telefon|tel_goster}}" placeholder="0532 111 22 33" type="tel" pattern="[0-9 ()+-]{10,15}" title="Örn: 0555 111 22 33 (en az 10 rakam)">
+  <label class="form-label" for="eposta">E-posta</label>
+  <input class="form-control mb-2" id="eposta" name="eposta" value="{{m.eposta or ''}}" placeholder="E-posta (isteğe bağlı)">
+  <label class="form-label" for="adres">Adres</label>
+  <textarea class="form-control mb-2" id="adres" name="adres" rows="2" placeholder="Adres (isteğe bağlı)">{{m.adres or ''}}</textarea>
+  <label class="form-label" for="notlar">Not</label>
+  <textarea class="form-control mb-2" id="notlar" name="notlar" rows="2" placeholder="Not (isteğe bağlı)">{{m.notlar or ''}}</textarea>
+  <div class="small-muted mb-2">Oluşturma: {{m.olusturuldu_at|zaman}} · Son düzenleme: {{m.guncellendi_at|zaman}}</div>
+  <div class="d-flex gap-2 mt-1"><button class="btn btn-primary btn-lg flex-fill">Kaydet</button><a class="btn btn-outline-secondary btn-lg" href="{{url_for('musteriler')}}">Vazgeç</a></div>
+</form>
+{% endblock %}

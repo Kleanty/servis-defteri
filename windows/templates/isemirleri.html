@@ -1,0 +1,201 @@
+{% extends 'base.html' %}{% from '_form_makro.html' import marka_sec, form_js %}{% from '_islem_makro.html' import islem_secici %}{% block content %}
+<style>
+.plaka-input{font-size:1.9rem;letter-spacing:2px;font-weight:700;text-align:center;text-transform:uppercase}
+.chip{border-radius:2rem;min-height:44px}
+#yeni>summary{list-style:none}#yeni>summary::-webkit-details-marker{display:none}#chipDetay>summary{list-style:none;cursor:pointer}#chipDetay>summary::-webkit-details-marker{display:none}.kat>summary{cursor:pointer}
+</style>
+
+<h4 class="mb-3">📋 İş Emirleri</h4>
+<details id="yeni" class="mb-4" {% if request.args.get('yeni') or hata or form %}open{% endif %}>
+<summary class="btn btn-amber btn-lg w-100 py-3 fw-bold">➕ Yeni İş Emri</summary>
+<div class="card shadow-sm mt-2"><div class="card-body">
+<form method="post" action="{{url_for('is_emri_hizli')}}" id="hizliForm" autocomplete="off" data-api="{{ url_for('api_plaka',plaka='__P__') }}" >
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if hata %}<div class="alert alert-danger fs-5 fw-semibold" role="alert">⛔ {{hata}}</div>{% endif %}
+  <div id="istemciHata" class="alert alert-danger fs-5 fw-semibold d-none" role="alert"></div>
+
+  <label class="form-label fw-semibold" for="plaka">Plaka *</label>
+  <input id="plaka" name="plaka" class="form-control form-control-lg plaka-input" value="{{form.get('plaka','')}}" placeholder="35 ABC 123" required maxlength="14" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="next">
+  <div class="form-check mt-1"><input type="checkbox" class="form-check-input" id="ozel" name="ozel_plaka" value="1" {% if form.get('ozel_plaka') %}checked{% endif %}><label for="ozel" class="form-check-label small-muted">Özel / yabancı plaka (biçim kontrolü yapma)</label></div>
+  <div id="plakaBilgi" class="mt-2" aria-live="polite"></div>
+
+  <label class="form-label fw-semibold mt-3" for="giris_km">Giriş KM *</label>
+  <input id="giris_km" name="giris_km" class="form-control form-control-lg" inputmode="numeric" pattern="[0-9.]*" value="{{form.get('giris_km','')}}" placeholder="Örn: 185.000" required maxlength="9" enterkeyhint="next">
+
+  <div id="musteriAlan">
+    <div class="small-muted mt-3 mb-1">Müşteri bilgisi isteğe bağlı — boş bırakılabilir.</div>
+    <label class="form-label fw-semibold" for="musteri_ad">Müşteri adı</label>
+    <input id="musteri_ad" name="musteri_ad" class="form-control form-control-lg" style="text-transform:uppercase" value="{{form.get('musteri_ad','')}}" maxlength="100" autocapitalize="words" enterkeyhint="next">
+    <label class="form-label fw-semibold mt-3" for="telefon">Telefon</label>
+    <input id="telefon" name="telefon" class="form-control form-control-lg" type="tel" inputmode="numeric" value="{{form.get('telefon','')}}" placeholder="0532 111 22 33" maxlength="14" enterkeyhint="next">
+  </div>
+
+  {{ islem_secici('gelis_nedeni', form.get('gelis_nedeni',''), 'Ne yapılacak?', sik_islemler, ozel_islemler, islem_kategorileri, url_for('api_islem_ekle'), csrf_token()) }}
+
+  <div id="aracAlan" class="mt-3">
+    <div class="small-muted mb-1">Araç bilgisi — isteğe bağlı. Kayıtlı araçta kendiliğinden dolar.</div>
+    <div class="row g-2">
+      <div class="col-6"><label class="form-label fw-semibold">Marka</label>{{ marka_sec(form.get('marka',''), form.get('marka_diger','')) }}</div>
+      <div class="col-6"><label class="form-label fw-semibold" for="model">Model</label><input id="model" class="form-control" name="model" placeholder="Örn: Corsa" value="{{form.get('model','')}}" maxlength="40"></div>
+    </div>
+  </div>
+
+  <details class="mt-3" {% if form.get('notlar') %}open{% endif %}>
+    <summary class="fw-semibold">Not (isteğe bağlı)</summary>
+    <input class="form-control mt-1" name="notlar" placeholder="Not" value="{{form.get('notlar','')}}" maxlength="1000">
+  </details>
+
+  <button class="btn btn-amber btn-lg w-100 py-3 fw-bold mt-4" id="kaydetBtn">✅ İş Emri Aç</button>
+</form>
+</div></div>
+</details>
+
+<span id="liste"></span>
+<ul class="nav nav-pills nav-fill mb-3 gap-1">
+  <li class="nav-item"><a class="nav-link py-3 fw-semibold {% if sekme=='acik' and not q %}active{% endif %}" href="{{url_for('is_emirleri',g='acik')}}#liste">Açık <span class="badge text-bg-light text-dark">{{acik_sayi}}</span></a></li>
+  <li class="nav-item"><a class="nav-link py-3 fw-semibold {% if sekme=='tamam' and not q %}active{% endif %}" href="{{url_for('is_emirleri',g='tamam')}}#liste">Teslim edilen</a></li>
+  <li class="nav-item"><a class="nav-link py-3 fw-semibold {% if sekme=='hepsi' and not q %}active{% endif %}" href="{{url_for('is_emirleri',g='hepsi')}}#liste">Hepsi</a></li>
+</ul>
+<form class="input-group mb-3"><input type="hidden" name="g" value="{{sekme}}"><input class="form-control form-control-lg" name="q" value="{{q}}" placeholder="Plaka / müşteri / işlem ara"><button class="btn btn-outline-primary">Ara</button>{% if q %}<a class="btn btn-outline-secondary" href="{{url_for('is_emirleri',g=sekme)}}#liste">Temizle</a>{% endif %}</form>
+{% if q %}<div class="small-muted mb-2">“{{q}}” için {{kayitlar|length}} sonuç (tüm iş emirlerinde arandı)</div>{% endif %}
+
+<div class="row row-cols-1 row-cols-lg-2 g-2 mb-3">
+{% for i in kayitlar %}
+<div class="col"><div class="card h-100 shadow-sm border-start border-5 border-{{durum_renk[i.durum]}}"><div class="card-body p-3 d-flex flex-column">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <div><div class="fs-3 fw-bold lh-1 text-nowrap">{{i.plaka|plaka_goster}}</div><div class="fw-semibold mt-1">{{i.ad_soyad}}</div></div>
+    <span class="badge text-bg-{{durum_renk[i.durum]}} fs-6">{{i.durum}}</span>
+  </div>
+  <div class="mt-2">{{i.yapilan_islem or i.gelis_nedeni or 'İşlem belirtilmemiş'}}</div>
+  <div class="small-muted mt-1">
+    Geliş {{i.gelis_at|zaman}}{% if i.durum=='Tamamlandı' and i.gidis_at %} · Teslim {{i.gidis_at|zaman}}{% endif %}{% if i.giris_km %} · {{'{:,}'.format(i.giris_km).replace(',','.')}} km{% endif %}
+    {% if i.durum!='Tamamlandı' %}{% set gn=i.gelis_at|gun_once %}{% if gn>=1 %}<span class="{{ 'text-danger fw-semibold' if gn>=bekleyen_gun else '' }}"> · ⏳ {{gn}} gündür serviste</span>{% endif %}{% endif %}
+  </div>
+
+  <div class="mt-auto pt-3">
+  {% if i.durum!='Tamamlandı' %}
+    <div class="d-grid gap-2" style="grid-template-columns:{{ '1fr 1fr' if i.durum=='Beklemede' else '1fr' }}">
+      {% if i.durum=='Beklemede' %}
+      <form method="post" action="{{url_for('is_emri_durum_guncelle',is_emri_id=i.id)}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="g" value="{{sekme}}"><input type="hidden" name="durum" value="Devam Ediyor"><button class="btn btn-primary btn-lg w-100 py-3 fw-bold">▶ İşe Başla</button></form>
+      {% endif %}
+      <form method="post" action="{{url_for('is_emri_durum_guncelle',is_emri_id=i.id)}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="g" value="{{sekme}}"><input type="hidden" name="durum" value="Tamamlandı"><button class="btn btn-success btn-lg w-100 py-3 fw-bold" data-confirm="Araç teslim edildi mi?" data-olumlu="1">✔ Teslim Et</button></form>
+    </div>
+  {% else %}
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <form method="post" action="{{url_for('is_emri_durum_guncelle',is_emri_id=i.id)}}" class="ms-auto"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="g" value="{{sekme}}"><input type="hidden" name="durum" value="Devam Ediyor"><button class="btn btn-outline-secondary" data-confirm="Teslim geri alınsın ve iş yeniden açılsın mı?">↩ Geri aç</button></form>
+    </div>
+  {% endif %}
+  {% set w=i|wa_hazir %}{% if w and i.durum!='Beklemede' %}<a class="btn btn-outline-success btn-lg w-100 mt-2" target="_blank" rel="noopener" href="{{w}}">💬 WhatsApp: Araç hazır</a>{% endif %}
+  <div class="d-flex gap-2 mt-2">
+    <a class="btn btn-outline-primary flex-fill" href="{{url_for('is_emri_duzenle',is_emri_id=i.id)}}">Düzenle</a>
+    <form method="post" action="{{url_for('is_emri_sil',is_emri_id=i.id)}}" data-confirm="Bu iş emri silinsin mi?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger">Sil</button></form>
+  </div>
+  </div>
+</div></div></div>
+{% else %}
+<div class="col-12"><div class="text-center text-muted py-5 fs-5">{% if q %}Sonuç yok.{% elif sekme=='acik' %}Açık iş emri yok 🎉{% else %}Kayıt yok.{% endif %}</div></div>
+{% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ form_js() }}
+
+<script>
+(function(){
+  var form=document.getElementById('hizliForm'), plaka=document.getElementById('plaka'), ozel=document.getElementById('ozel');
+  var bilgi=document.getElementById('plakaBilgi'), alan=document.getElementById('musteriAlan');
+  var ad=document.getElementById('musteri_ad'), tel=document.getElementById('telefon');
+  var nedeni=document.getElementById('gelis_nedeni'), btn=document.getElementById('kaydetBtn');
+  var API=form.dataset.api;
+  var kmAlan=document.getElementById('giris_km');
+  var aracAlan=document.getElementById('aracAlan'), markaSel=aracAlan.querySelector('.marka-sec'), markaDig=aracAlan.querySelector('.marka-diger'), modelIn=document.getElementById('model');
+  var oto=false;   // marka/model kutuları kayıtlı araçtan kendiliğinden dolduruldu mu (kullanıcı elle değiştirirse false)
+  function markaYaz(m){
+    if(!m){ markaSel.value=''; markaDig.value=''; }
+    else if(Array.prototype.some.call(markaSel.options,function(o){return o.value===m;})){ markaSel.value=m; markaDig.value=''; }
+    else { markaSel.value='__diger__'; markaDig.value=m; }
+    markaDig.classList.toggle('d-none',markaSel.value!=='__diger__');
+  }
+  function setArac(goster,d){   // marka/model hep görünür ve isteğe bağlıdır; kayıtlı araçta kayıttaki değerlerle dolar
+    if(d){
+      if(oto||(!markaSel.value&&!modelIn.value)){ markaYaz(d.marka||''); modelIn.value=d.model||''; oto=!!(d.marka||d.model); }
+    } else if(oto){ markaYaz(''); modelIn.value=''; oto=false; }
+  }
+  markaSel.addEventListener('change',function(){ oto=false; });
+  modelIn.addEventListener('input',function(){ oto=false; });
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function temiz(s){ return s.replace(/[İı]/g,'I').replace(/[Şş]/g,'S').replace(/[Çç]/g,'C').replace(/[Ğğ]/g,'G').replace(/[Öö]/g,'O').replace(/[Üü]/g,'U').toUpperCase().replace(/[^0-9A-Z]/g,''); }
+  // 35ABC123 -> "35 ABC 123"  (il kodu + 1-3 harf + 2-4 rakam)
+  function bicim(s){ var m=/^(\d{1,2})([A-Z]{0,3})(\d{0,4})/.exec(s); return m?[m[1],m[2],m[3]].filter(Boolean).join(' '):s; }
+  var TAM=/^(0[1-9]|[1-7]\d|8[01])[A-Z]{1,3}\d{2,4}$/;
+
+  var tmr=null, tok=0;
+  function setMusteri(goster){
+    alan.classList.toggle('d-none',!goster);
+    ad.disabled=!goster; tel.disabled=!goster;   // disabled alanlar zorunlu sayılmaz ve gönderilmez
+  }
+  function goster(d,p){
+    if(d&&d.bulundu){
+      var h='<div class="alert alert-success mb-0"><strong>✔ '+esc(d.musteri_adi)+'</strong>'+(d.telefon?' · '+esc(d.telefon):'')+((d.marka||d.model)?'<br>'+esc((d.marka+' '+d.model).trim()):'')+'</div>';
+      if(d.son_gelis) h=h.replace('</div>','<div class="small mt-1">Son geliş: '+esc(d.son_gelis)+(d.son_islem?' · '+esc(d.son_islem):'')+(d.son_km?' · '+esc(Number(d.son_km).toLocaleString('tr-TR'))+' km':'')+'</div></div>');
+      else h=h.replace('</div>','<div class="small mt-1">Bu araç için daha önce iş emri yok.</div></div>');
+      kmAlan.placeholder=d.son_km?('Son km: '+Number(d.son_km).toLocaleString('tr-TR')):'Örn: 185.000';
+      if(d.acik_is_emri>0) h+='<div class="alert alert-warning mt-2 mb-0">⚠ Bu araçta zaten '+d.acik_is_emri+' açık iş emri var.</div>';
+      bilgi.innerHTML=h; setMusteri(String(d.musteri_adi||'').indexOf('İSİMSİZ')===0); setArac(true,d);   // isimsiz açılmış araçta isim/telefon sonradan girilebilsin
+    } else {
+      setMusteri(true); setArac(true,null); kmAlan.placeholder='Örn: 185.000';
+      bilgi.innerHTML=(d&&p&&(ozel.checked||TAM.test(p)))?'<div class="alert alert-info mb-0">Kayıtlı değil. Müşteri ve araç yeni kaydedilecek.</div>':'';
+    }
+  }
+  function ara(){
+    clearTimeout(tmr); var p=temiz(plaka.value);
+    if(p.length<5){ goster(null); return; }
+    tmr=setTimeout(function(){
+      var my=++tok;
+      fetch(API.replace('__P__',encodeURIComponent(p)),{credentials:'same-origin'})
+        .then(function(r){return r.json();})
+        .then(function(d){ if(my===tok) goster(d,p); })
+        .catch(function(){ if(my===tok) goster(null); });
+    },300);
+  }
+  function bicimle(){ var p=temiz(plaka.value); plaka.value=ozel.checked?p:bicim(p); }
+  plaka.addEventListener('input',function(){ bicimle(); ara(); });
+  ozel.addEventListener('change',function(){ bicimle(); ara(); });
+
+  ad.addEventListener('input',function(){ var p=ad.selectionStart; ad.value=ad.value.toLocaleUpperCase('tr-TR'); try{ad.setSelectionRange(p,p);}catch(e){} });
+  kmAlan.addEventListener('input',function(){ var d=kmAlan.value.replace(/\D/g,'').slice(0,7); kmAlan.value=d?Number(d).toLocaleString('tr-TR'):''; });
+  tel.addEventListener('input',function(){
+    var d=tel.value.replace(/\D/g,'');
+    if(d.indexOf('90')===0&&d.length>=12) d='0'+d.slice(2);
+    else if(d&&d[0]!=='0') d='0'+d;
+    d=d.slice(0,11);
+    tel.value=[d.slice(0,4),d.slice(4,7),d.slice(7,9),d.slice(9,11)].filter(Boolean).join(' ');
+  });
+
+  var eh=document.getElementById('istemciHata');
+  function hataGoster(m,el){ eh.textContent='⛔ '+m; eh.classList.remove('d-none'); eh.scrollIntoView({block:'center',behavior:'smooth'}); if(el) el.focus(); }
+  form.addEventListener('submit',function(e){
+    eh.classList.add('d-none');
+    var p=temiz(plaka.value);
+    if(!p){ e.preventDefault(); return hataGoster('Plaka gerekli.',plaka); }
+    if(!ozel.checked&&!TAM.test(p)){ e.preventDefault(); return hataGoster('Plaka eksik veya hatalı. Örnek: 35 ABC 123',plaka); }
+    if(!kmAlan.value.replace(/\D/g,'')){ e.preventDefault(); return hataGoster('Giriş KM zorunludur.',kmAlan); }
+    if(!tel.disabled){   // telefon isteğe bağlı; yazıldıysa 11 haneli olmalı
+      var td=tel.value.replace(/\D/g,'');
+      if(td&&td.length!==11){ e.preventDefault(); return hataGoster('Telefon 11 haneli olmalı (örnek: 0532 111 22 33) ya da boş bırak.',tel); }
+    }
+    btn.disabled=true; btn.textContent='Kaydediliyor...';
+  });
+  window.addEventListener('pageshow',function(){ btn.disabled=false; btn.textContent='✅ İş Emri Aç'; });
+
+  bicimle(); ara();
+  var yeniKutu=document.getElementById('yeni');
+  function yeniAc(){ if(location.hash==='#yeni'){ yeniKutu.open=true; setTimeout(function(){ yeniKutu.scrollIntoView({block:'start'}); (plaka.value?nedeni:plaka).focus(); },150); } }
+  yeniAc(); window.addEventListener('hashchange',yeniAc);
+  yeniKutu.querySelector('summary').addEventListener('click',function(){ setTimeout(function(){ if(yeniKutu.open) plaka.focus(); },50); });
+})();
+</script>
+{% include '_islem_js.html' %}
+{% endblock %}

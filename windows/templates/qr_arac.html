@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#141615"><link rel="icon" href="/static/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48.png"><link rel="icon" type="image/png" sizes="96x96" href="/static/favicon-96.png"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+<title>{{a.plaka|plaka_goster}} · {{isletme.ad}}</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#111827;--mut:#6b7280;--line:#e5e7eb;--acc:#dc2626;--ok:#16a34a;--warn:#d97706}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px 40px}.wrap.usta{padding-bottom:110px}
+header{position:relative;background:linear-gradient(160deg,#141615,#2b3037);color:#fff;margin:0 -16px;padding:12px 16px 60px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+header b{letter-spacing:.28em;font-size:.8rem;font-weight:700}
+header>span:not(.logo-chip){display:block}.amb{color:#ff5a4f;font-style:normal}.logo-chip{display:inline-flex!important;background:transparent;border-radius:0;padding:0;margin:0}.logo-chip img{height:50px;width:auto;display:block}
+.hero{position:relative;z-index:1;background:var(--card);border-radius:20px;margin-top:-44px;padding:22px 20px;text-align:center;box-shadow:0 6px 24px rgba(17,24,39,.08)}
+.plaka{display:inline-flex;align-items:stretch;border:3px solid #111;border-radius:8px;overflow:hidden;background:#fff}
+.plaka i{background:#1d4ed8;color:#fff;font:700 .6rem/1 system-ui;font-style:normal;padding:8px 7px 6px;display:flex;align-items:flex-end}
+.plaka em{font:800 1.9rem/1 ui-monospace,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.06em;padding:8px 14px}
+.arac{margin-top:14px;font-size:1.15rem;font-weight:600}
+.sahip{color:var(--mut);font-size:.9rem;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.chips span{background:var(--bg);border-radius:99px;padding:5px 12px;font-size:.85rem;color:#374151}
+h3{margin:26px 4px 12px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between}
+.gecmis{position:relative;padding-left:4px}
+.gecmis:before{content:"";position:absolute;left:26px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.k{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;position:relative}
+.tar{flex:0 0 46px;text-align:center;background:var(--card);border-radius:12px;padding:7px 0 6px;box-shadow:0 2px 10px rgba(17,24,39,.06);position:relative;z-index:1}
+.tar b{display:block;font-size:1.25rem;line-height:1}
+.tar span{display:block;font-size:.66rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.tar small{display:block;font-size:.6rem;color:#9ca3af}
+.kart{flex:1;background:var(--card);border-radius:16px;padding:13px 14px;box-shadow:0 4px 16px rgba(17,24,39,.05)}
+.kart .et{display:flex;flex-wrap:wrap;gap:6px}
+.kart .et span{background:var(--bg);color:#1f2937;border-radius:99px;padding:5px 11px;font-size:.88rem;font-weight:500}
+.kart .acik{display:inline-block;margin-top:9px;font-size:.74rem;font-weight:700;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:99px;padding:3px 10px}
+.devam{background:#fff7e0;border:2px solid #fbbf24;border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:0 4px 16px rgba(251,191,36,.18)}.devam b{display:block;font-size:.78rem;letter-spacing:.14em;color:#b45309;margin-bottom:8px}.devam .et span{background:#fff;border:1px solid #fde68a}.sit{display:block;text-align:center;margin-top:26px;color:#6b7280;font-size:.85rem;text-decoration:none}.kmk{display:block;margin-top:8px;font-size:.78rem;color:#6b7280}
+.sit-ust{display:inline-flex;flex:none;align-items:center;gap:5px;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;font-size:.74rem;font-weight:600;text-decoration:none;letter-spacing:.02em}.sit-ust:active{background:rgba(255,255,255,.28)}
+.alt{position:fixed;z-index:50;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.alt div{max-width:480px;margin:0 auto;display:flex;gap:10px}
+.alt a{flex:1;text-align:center;padding:10px 6px;border-radius:14px;font-weight:700;text-decoration:none;font-size:.85rem;line-height:1.35}
+.ara{background:#141615;color:#fff}
+.wa{background:#16a34a;color:#fff}
+.web{background:#e5e7eb;color:#111827}
+.is{background:#f59e0b;color:#1f1300}
+.islbtn{display:flex;gap:8px;align-items:center;margin-top:9px}.islbtn .duz,.islbtn .tmm{margin:0}
+.tmm{display:inline-block;font-size:.74rem;font-weight:700;color:#fff;background:#16a34a;border:0;border-radius:99px;padding:3px 12px;cursor:pointer}
+.bitti{display:inline-block;margin-top:9px;font-size:.78rem;font-weight:700;color:#166534;background:#dcfce7;border-radius:99px;padding:3px 10px}
+.duz{display:inline-block;margin-top:9px;margin-left:8px;font-size:.74rem;font-weight:700;color:#141615;background:#e5e7eb;border-radius:99px;padding:3px 10px;text-decoration:none}
+.bos{padding:34px 0;text-align:center;color:var(--mut);background:var(--card);border-radius:16px}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:28px}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:28px}
+</style></head>
+<body><div class="wrap{{' usta' if usta}}">
+<header>{% if logo %}<span class="logo-chip"><img src="{{logo}}" alt="{{isletme.ad}}"></span>{% else %}<b>{{isletme.ad_html}}</b>{% endif %}<a class="sit-ust" href="{{url_for('anasayfa')}}">🌐 {{site}}</a></header>
+
+<section class="hero">
+  <div class="plaka"><i>TR</i><em>{{a.plaka|plaka_goster}}</em></div>
+  <div class="arac">{{((a.marka or '')~' '~(a.model or '')).strip() or 'Araç'}}</div>
+  <div class="sahip">{{a.ad_soyad|ad_kisalt}}</div>
+  {% set bilgi=[a.model_yili, a.yakit_tipi, a.sanziman, ('{:,}'.format(a.kilometre).replace(',','.')~' km') if a.kilometre else none] %}
+  <div class="chips">{% for b in bilgi if b %}<span>{{b}}</span>{% endfor %}</div>
+</section>
+
+<h3><span>Servis geçmişi</span><span>{{toplam}} kayıt</span></h3>
+{% set ay=['','Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'] %}
+<section class="gecmis">
+{% for h in hs %}{% set d=(h.gelis_at or '')[:10].split('-') %}
+<div class="k"><div class="tar"><b>{{d[2] if d|length==3}}</b><span>{{ay[d[1]|int] if d|length==3}}</span><small>{{d[0] if d|length==3}}</small></div>
+  <div class="kart"><div class="et">{% for x in (h.yapilan_islem or h.gelis_nedeni or 'Servis işlemi').split(',') if x.strip() %}<span>{{x.strip()}}</span>{% endfor %}</div>{% if h.durum!='Tamamlandı' %}<span class="acik">● İşlem devam ediyor</span>{% endif %}{% if h.id in yeni_tamam %}<span class="bitti">✅ Tamamlandı · {{h.gidis_at|zaman}}</span>{% endif %}{% if usta %}<div class="islbtn"><a class="duz" href="{{url_for('is_emri_duzenle',is_emri_id=h.id,geri=geri)}}">✏️ Düzenle</a>{% if h.durum!='Tamamlandı' %}<form method="post" action="{{url_for('is_emri_durum_guncelle',is_emri_id=h.id)}}" style="display:inline" onsubmit="return confirm('Bu iş emri tamamlandı olarak işaretlensin mi?')"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><input type="hidden" name="durum" value="Tamamlandı"><input type="hidden" name="geri" value="{{geri}}"><button class="tmm" type="submit">✅ Tamamlandı</button></form>{% endif %}</div>{% endif %}{% if h.giris_km %}<span class="kmk">{{'{:,}'.format(h.giris_km).replace(',','.')}} km</span>{% endif %}</div></div>
+{% else %}<div class="bos">Henüz servis kaydı yok.</div>{% endfor %}
+</section>
+</div>
+{% if usta %}<div class="alt"><div>
+{% if musteri_tel %}<a class="ara" href="{{musteri_tel}}">📞<br>Müşteriyi Ara</a>{% endif %}{% if musteri_wa %}<a class="wa" target="_blank" rel="noopener" href="{{musteri_wa}}">💬<br>Müşteriye Haber Et</a>{% endif %}
+<a class="is" href="{{yeni_url}}">➕<br>Yeni İş Emri Aç</a>
+</div></div>{% endif %}
+</body></html>

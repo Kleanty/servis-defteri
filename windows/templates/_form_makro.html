@@ -1,0 +1,51 @@
+{# Ortak form parçaları: marka / yakıt / şanzıman / yıl seçimleri ve plaka-marka JS'i #}
+{% macro marka_sec(secili='', diger='') -%}
+<select class="form-select marka-sec" name="marka" aria-label="Marka">
+  <option value="">Marka</option>
+  {% for m in MARKALAR %}<option value="{{m}}" {% if m==secili %}selected{% endif %}>{{m}}</option>{% endfor %}
+  {% if secili and secili!='__diger__' and secili not in MARKALAR %}<option value="{{secili}}" selected>{{secili}}</option>{% endif %}
+  <option value="__diger__" {% if secili=='__diger__' %}selected{% endif %}>Diğer (yaz)</option>
+</select>
+<input class="form-control mt-1 marka-diger {% if secili!='__diger__' %}d-none{% endif %}" name="marka_diger" placeholder="Markayı yaz" value="{{diger}}" maxlength="40">
+{%- endmacro %}
+
+{% macro yakit_sec(secili='') -%}
+<select class="form-select" name="yakit_tipi" aria-label="Yakıt">
+  <option value="">Yakıt</option>
+  {% for y in YAKITLAR %}<option value="{{y}}" {% if y==secili %}selected{% endif %}>{{y}}</option>{% endfor %}
+  {% if secili and secili not in YAKITLAR %}<option value="{{secili}}" selected>{{secili}}</option>{% endif %}
+</select>
+{%- endmacro %}
+
+{% macro sanziman_sec(secili='') -%}
+<select class="form-select" name="sanziman" aria-label="Şanzıman">
+  <option value="">Şanzıman</option>
+  {% for z in SANZIMANLAR %}<option value="{{z}}" {% if z==secili %}selected{% endif %}>{{z}}</option>{% endfor %}
+  {% if secili and secili not in SANZIMANLAR %}<option value="{{secili}}" selected>{{secili}}</option>{% endif %}
+</select>
+{%- endmacro %}
+
+{% macro yil_sec(secili='') -%}
+<select class="form-select" name="model_yili" aria-label="Model yılı">
+  <option value="">Yıl</option>
+  {% for y in yillar() %}<option value="{{y}}" {% if secili|string==y|string %}selected{% endif %}>{{y}}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{# Plaka kutusunu "35 ABC 123" biçimine çevirir (id="plaka-alan" + id="ozel-alan") ve "Diğer" marka kutusunu açar/kapatır #}
+{% macro form_js() -%}
+<script>
+(function(){
+  document.querySelectorAll('.marka-sec').forEach(function(sel){
+    var kutu=sel.parentNode.querySelector('.marka-diger');
+    sel.addEventListener('change',function(){ var a=sel.value==='__diger__'; kutu.classList.toggle('d-none',!a); if(a) kutu.focus(); });
+  });
+  var pl=document.getElementById('plaka-alan'), oz=document.getElementById('ozel-alan');
+  if(!pl) return;
+  function temiz(s){ return s.replace(/[İı]/g,'I').replace(/[Şş]/g,'S').replace(/[Çç]/g,'C').replace(/[Ğğ]/g,'G').replace(/[Öö]/g,'O').replace(/[Üü]/g,'U').toUpperCase().replace(/[^0-9A-Z]/g,''); }
+  function bicim(s){ var m=/^(\d{1,2})([A-Z]{0,3})(\d{0,4})/.exec(s); return m?[m[1],m[2],m[3]].filter(Boolean).join(' '):s; }
+  function yaz(){ var p=temiz(pl.value); pl.value=(oz&&oz.checked)?p:bicim(p); }
+  pl.addEventListener('input',yaz); if(oz) oz.addEventListener('change',yaz); yaz();
+})();
+</script>
+{%- endmacro %}
