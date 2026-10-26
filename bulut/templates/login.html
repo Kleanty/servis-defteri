@@ -1,0 +1,18 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#141615"><link rel="icon" href="/static/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48.png"><link rel="icon" type="image/png" sizes="96x96" href="/static/favicon-96.png"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png"><link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet"><title>Servis Girişi · {{isletme.ad}}</title>
+<style>
+:root{--bs-primary:#1f8f5f;--bs-primary-rgb:31,143,95;--bs-link-color:#1f8f5f;--bs-link-hover-color:#177049;--navy:#141615;--navy2:#1f8f5f;--amber:#fbbf24}
+body{background:#f1f5f9}
+.btn-primary{--bs-btn-bg:#1f8f5f;--bs-btn-border-color:#1f8f5f;--bs-btn-hover-bg:#177049;--bs-btn-hover-border-color:#177049;--bs-btn-active-bg:#177049;--bs-btn-active-border-color:#177049;--bs-btn-disabled-bg:#1f8f5f;--bs-btn-disabled-border-color:#1f8f5f}
+.btn-outline-primary{--bs-btn-color:#1f8f5f;--bs-btn-border-color:#1f8f5f;--bs-btn-hover-bg:#1f8f5f;--bs-btn-hover-border-color:#1f8f5f;--bs-btn-active-bg:#1f8f5f;--bs-btn-active-border-color:#1f8f5f}
+.text-bg-primary{background-color:#1f8f5f!important}
+.btn-amber{--bs-btn-color:#1e1b0b;--bs-btn-bg:#fbbf24;--bs-btn-border-color:#fbbf24;--bs-btn-hover-color:#1e1b0b;--bs-btn-hover-bg:#f59e0b;--bs-btn-hover-border-color:#f59e0b;--bs-btn-active-color:#1e1b0b;--bs-btn-active-bg:#f59e0b;--bs-btn-active-border-color:#f59e0b;--bs-btn-disabled-color:#1e1b0b;--bs-btn-disabled-bg:#fbbf24;--bs-btn-disabled-border-color:#fbbf24}
+.navbar{background:linear-gradient(160deg,#141615,#2b3037)!important}
+.marka-yazi{font-weight:800;letter-spacing:.16em;color:#fff;text-decoration:none;white-space:nowrap}.amb{color:#fbbf24}
+.logo-chip{display:inline-flex;background:transparent;border-radius:0;padding:0}.logo-chip img{height:120px;width:auto;display:block;margin:0 auto 6px}.amb{color:#7ee2a8}
+.card{border-radius:16px;border-color:#e2e8f0}
+body{min-height:100vh;background:linear-gradient(160deg,#141615,#2b3037);display:flex;align-items:center}.marka-yazi{font-size:1.3rem}</style></head>
+<body><div class="container" style="max-width:380px"><div class="text-center mb-4"><span class="marka-yazi">{% if logo %}<span class="logo-chip"><img src="{{logo}}" alt="{{isletme.ad}}"></span><span style="font-family:Georgia,serif;letter-spacing:.1em;display:block">{{isletme.ad_html}}</span>{% else %}{{isletme.ad_html}}{% endif %}</span><div class="small mt-2" style="color:#94a3b8">Dükkân girişi</div></div>
+<div class="card p-4 shadow-lg border-0">{% for c,m in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{c}} fw-semibold">⛔ {{m}}</div>{% endfor %}
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input class="form-control form-control-lg mb-2" type="text" name="kullanici" placeholder="Kullanıcı adı" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" aria-label="Kullanıcı adı"><input class="form-control form-control-lg mb-3" type="password" name="sifre" placeholder="Şifre" required autocomplete="current-password" aria-label="Şifre"><button class="btn btn-amber btn-lg w-100 fw-bold py-3">Giriş Yap</button></form>
+<div class="small text-muted text-center mt-3">Şifreni unuttuysan dükkânını açan yöneticiye ulaş; yeni geçici şifre verir.</div>
+</div></div></body></html>

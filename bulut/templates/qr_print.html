@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Etiket · {{a.plaka|plaka_goster}}{% endblock %}
+{% block content %}
+<style>
+.et-w{max-width:560px;margin:0 auto;padding-bottom:90px}
+.et-card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(15,23,42,.07);margin-bottom:12px}
+.et-pl{font:800 1.6rem/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em;color:#141615;white-space:nowrap}
+.et-chip{display:inline-flex;gap:7px;align-items:center;padding:7px 14px;border-radius:99px;font-size:.88rem;font-weight:600;white-space:nowrap}
+.et-chip.ok{background:#dcfce7;color:#166534}.et-chip.bad{background:#fee2e2;color:#991b1b}.et-chip.bek{background:#e2e8f0;color:#475569}
+.et-lbl{font-size:.72rem;letter-spacing:.12em;color:#64748b;text-transform:uppercase;margin:14px 2px 6px}
+.et-prev{display:block;margin:auto;max-width:100%;image-rendering:pixelated;border:1px solid #cbd5e1;background:#fff}
+.et-dev{border:0;border-radius:18px;background:#fbbf24;color:#1e1b0b;font-weight:800;font-size:1.2rem;padding:22px 8px;width:100%;line-height:1.25}
+.et-dev:disabled{opacity:.6}
+.et-btn-not{font-size:.82rem;color:#64748b;margin:8px 4px 0}
+.et-dev small{display:block;font-weight:600;font-size:.8rem;opacity:.8;margin-top:3px}
+.et-ad{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:14px}
+.et-ad button{width:52px;height:48px;border:2px solid #cbd5e1;border-radius:12px;background:#fff;font-size:1.5rem;font-weight:700}
+.et-ad b{font-size:1.7rem;min-width:30px;text-align:center}
+.et-sonuc{display:none;margin-top:12px;border-radius:14px;padding:13px 15px;font-weight:600}
+.et-sonuc.ok{display:block;background:#dcfce7;color:#166534}.et-sonuc.bad{display:block;background:#fee2e2;color:#991b1b}
+.et-yeni{background:#fff;border:2px solid #86efac;border-radius:18px;text-align:center;padding:18px 12px;margin-bottom:12px}
+.et-yeni .t{font-size:2.6rem;line-height:1}.et-yeni .pl{font:800 2rem/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:#141615;margin-top:6px}
+</style>
+<div class="et-w pt-3">
+{% if yeni %}<div class="et-yeni"><div class="t">✅</div><div class="pl">{{a.plaka|plaka_goster}}</div><div class="text-muted">Yeni araç ve iş emri kaydedildi · etiketi yapıştırın</div></div>{% endif %}
+
+<div class="et-card d-flex justify-content-between align-items-center gap-2">
+  <div>{% if not yeni %}<div class="et-pl">{{a.plaka|plaka_goster}}</div>{% endif %}<div class="{{'fw-semibold' if yeni else 'text-muted'}}">{{a.ad_soyad}}{% if a.marka or a.model %} · {{a.marka or ''}} {{a.model or ''}}{% endif %}</div></div>
+</div>
+
+<div class="et-lbl">Etiket önizleme</div>
+<div class="et-card" style="padding:12px"><img id="onizleme" class="et-prev" src="{{url_for('arac_etiket_onizleme',arac_id=a.id)}}" alt="Etiket önizleme"></div>
+
+<div class="et-ad"><span class="text-muted">Adet</span><button type="button" id="eksi" aria-label="Azalt">−</button><b id="adet">1</b><button type="button" id="arti" aria-label="Artır">+</button></div>
+<button id="bt" type="button" class="et-dev">📲 Etiketi Bluetooth ile çıkart<small>58 × 40 mm · telefon yazıcıya bağlanır · Android Chrome</small></button>
+<div id="btNot" class="et-btn-not d-none"></div>
+<div id="sonuc" class="et-sonuc" role="status"></div>
+
+{% if yeni %}<a class="btn btn-outline-secondary btn-lg w-100 mt-3" href="{{url_for('is_emirleri')}}">Şimdi değil, işe devam</a>{% else %}<a class="btn btn-outline-secondary w-100 mt-3" href="{{url_for('araclar')}}">← Araçlara dön</a>{% endif %}
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var T={{csrf_token()|tojson}}, ID={{a.id}}, adet=1;
+  var $=function(i){return document.getElementById(i)};
+  function post(url,data){
+    var b=new URLSearchParams(data||{}); b.append('csrf_token',T);
+    return fetch(url,{method:'POST',headers:{'X-Requested-With':'fetch','X-CSRF-Token':T,'Accept':'application/json'},body:b,credentials:'same-origin'})
+      .then(function(r){return r.json().catch(function(){return {ok:false,mesaj:'Oturum süresi dolmuş olabilir; sayfayı yenileyin.'}})});
+  }
+  function sonuc(ok,m){var s=$('sonuc');s.className='et-sonuc '+(ok?'ok':'bad');s.textContent=(ok?'✅ ':'⛔ ')+m}
+  $('eksi').onclick=function(){adet=Math.max(1,adet-1);$('adet').textContent=adet};
+  $('arti').onclick=function(){adet=Math.min(20,adet+1);$('adet').textContent=adet};
+  // ---- Bluetooth (BLE) ile telefondan yazdırma: etiket baytlarını sunucu üretir, telefon yazıcıya gönderir
+  var SERV=['49535343-fe7d-4ae5-8fa9-9fafd205e455','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
+  var btAygit=null, btKar=null;
+  function bekle(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  function btNot(m){var n=$('btNot');n.textContent=m;n.classList.toggle('d-none',!m)}
+  function btUygun(){
+    if(!window.isSecureContext) return 'Bluetooth için adres https:// ile açılmalı (alan adı/Cloudflare tüneli). Şu an güvenli bağlantı değil.';
+    if(!navigator.bluetooth) return 'Bu tarayıcı Bluetooth yazdırmayı desteklemiyor. Android’de Chrome kullanın (iPhone/Safari desteklemez).';
+    return '';
+  }
+  function btKarakter(sunucu){
+    return sunucu.getPrimaryServices().then(function(list){
+      list.sort(function(a,b){var x=SERV.indexOf(a.uuid),y=SERV.indexOf(b.uuid);return (x<0?99:x)-(y<0?99:y)});
+      var i=0;
+      function sonraki(){
+        if(i>=list.length) throw new Error('yazilabilir-yok');
+        var sv=list[i++];
+        return sv.getCharacteristics().then(function(cs){
+          for(var k=0;k<cs.length;k++){var p=cs[k].properties; if(p.writeWithoutResponse||p.write) return cs[k]}
+          return sonraki();
+        }).catch(function(){return sonraki()});
+      }
+      return sonraki();
+    });
+  }
+  function btBaglan(){
+    if(btKar && btAygit && btAygit.gatt.connected) return Promise.resolve(btKar);
+    var al=btAygit ? Promise.resolve(btAygit) : navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SERV}).then(function(d){
+      btAygit=d; d.addEventListener('gattserverdisconnected',function(){btKar=null}); return d});
+    return al.then(function(d){return d.gatt.connect()}).then(btKarakter).then(function(c){btKar=c;return c});
+  }
+  function btYaz(c,bayt){
+    var i=0, boy=100;
+    function yaz(){
+      if(i>=bayt.length) return Promise.resolve();
+      var parca=bayt.slice(i,i+boy);
+      var p=(c.properties.writeWithoutResponse&&c.writeValueWithoutResponse)?c.writeValueWithoutResponse(parca):c.writeValue(parca);
+      return p.then(function(){i+=parca.length;return bekle(15)},function(e){
+        if(boy>20){boy=20;return yaz()}   // küçük MTU: 20 baytlık parçalara düş
+        throw e}).then(yaz);
+    }
+    return yaz();
+  }
+  var btGonderiyor=false;
+  $('bt').onclick=function(){
+    if(btGonderiyor) return;
+    var u=btUygun(); if(u){sonuc(false,u);return}
+    btGonderiyor=true; var b=$('bt'), eski=b.innerHTML; b.disabled=true; b.innerHTML='⏳ Hazırlanıyor…';
+    // requestDevice kullanıcı dokunuşundan hemen sonra çağrılmalı: önce yazıcıya bağlan, sonra veriyi iste
+    btBaglan().then(function(c){
+      b.innerHTML='⏳ Gönderiliyor…';
+      return post('{{url_for("arac_tspl",arac_id=a.id)}}',{adet:adet}).then(function(d){
+        if(!d.ok) throw new Error('sunucu:'+(d.mesaj||''));
+        var ikili=atob(d.veri), bayt=new Uint8Array(ikili.length); for(var i=0;i<ikili.length;i++) bayt[i]=ikili.charCodeAt(i);
+        return btYaz(c,bayt);
+      });
+    }).then(function(){sonuc(true,'Etiket Bluetooth ile yazıcıya gönderildi.')}).catch(function(e){
+      var m=String(e&&e.message||e), ad=e&&e.name;
+      if(ad==='NotFoundError'||/cancel|chosen/i.test(m)) sonuc(false,'Yazıcı seçilmedi. Yazıcıyı açıp tekrar dene ve listeden seç.');
+      else if(m==='yazilabilir-yok') {btAygit=null; sonuc(false,'Bu yazıcıda yazılabilir Bluetooth kanalı bulunamadı. Yazıcı “BLE” destekli olmayabilir (Klasik Bluetooth Chrome’da çalışmaz).');}
+      else if(m.indexOf('sunucu:')===0) sonuc(false,m.slice(7)||'Etiket hazırlanamadı.');
+      else {btAygit=null;btKar=null; sonuc(false,'Bluetooth ile gönderilemedi. Yazıcıyı kapatıp aç, telefonun Bluetooth’unu kontrol et ve tekrar dene.')}
+    }).then(function(){btGonderiyor=false;b.disabled=false;b.innerHTML=eski});
+  };
+  btNot(btUygun());
+})();
+</script>
+{% endblock %}

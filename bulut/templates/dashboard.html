@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block content %}
+{% if bekleyen_sayi %}<a class="alert alert-danger bildirim d-block text-decoration-none" href="{{url_for('istatistik')}}#ozet">⚠️ {{bekleyen_sayi}} iş emri {{bekleyen_gun}} günden uzun süredir açık. Görmek için dokun.</a>{% endif %}
+
+<form class="mb-3" action="{{url_for('ara')}}"><div class="input-group input-group-lg">
+  <input class="form-control" name="q" placeholder="🔍 Plaka veya müşteri ara" autocapitalize="characters" autocomplete="off" enterkeyhint="search" aria-label="Plaka veya müşteri ara"><button class="btn btn-primary px-4">Ara</button>
+</div></form>
+
+<a class="btn btn-amber btn-lg w-100 py-3 fs-4 fw-bold mb-3" href="{{url_for('is_emirleri')}}#yeni">➕ Yeni İş Emri</a>
+
+<div class="row g-2 mb-3">
+  <div class="col-6"><a class="card text-center shadow-sm text-decoration-none border-danger h-100" href="{{url_for('is_emirleri',g='acik')}}#liste"><div class="card-body py-3"><div class="display-5 fw-bold text-danger">{{acik}}</div><div class="text-dark">Açık iş emri</div></div></a></div>
+  <div class="col-6"><a class="card text-center shadow-sm text-decoration-none border-success h-100" href="{{url_for('is_emirleri',g='tamam')}}#liste"><div class="card-body py-3"><div class="display-5 fw-bold text-success">{{bugun_teslim}}</div><div class="text-dark">Bugün teslim</div></div></a></div>
+</div>
+
+<div class="card shadow-sm mb-3"><div class="card-header fw-semibold d-flex justify-content-between">Bugün gelen <span class="badge text-bg-info">{{bugun_gelen}}</span></div>
+<div class="list-group list-group-flush">
+{% for r in bugun_listesi %}<a class="list-group-item d-flex justify-content-between align-items-center py-3" href="{{url_for('is_emirleri',q=r.plaka)}}#liste"><span><b class="fs-5">{{r.plaka|plaka_goster}}</b><br><span class="small-muted">{{r.ad_soyad}} · {{ (r.gelis_at|string)[11:16] }}</span></span><span class="badge text-bg-{{durum_renk[r.durum]|replace('primary','devam')}} fs-6">{{r.durum}}</span></a>
+{% else %}<div class="list-group-item text-center text-muted py-4">Bugün henüz kayıt yok.</div>{% endfor %}
+</div></div>
+<div class="small-muted text-center">Toplam: {{toplam[0]}} müşteri · {{toplam[1]}} araç · {{toplam[2]}} iş emri</div>
+<div class="small-muted text-center mt-2">{{'⚠️' if yedek.kotu else '💾'}} {{yedek.metin}}{% if yedek.kotu %} Sunucu yedeği gecikmiş olabilir; yöneticiye haber ver.{% endif %}</div>
+<div class="d-flex gap-2 justify-content-center mt-3 mb-2">
+  <a class="btn btn-outline-secondary btn-sm" href="{{url_for('silinenler')}}">🗑️ Silinenler</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{url_for('disa_aktar')}}">📥 Veri, yedek, şifre</a>
+  <form method="post" action="{{url_for('cikis_hepsi')}}" data-confirm="Tüm telefonlardan ve bilgisayarlardan çıkış yapılsın mı? Herkes şifreyle yeniden girer."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger btn-sm">🔒 Tüm cihazlardan çıkış</button></form>
+</div>
+{% endblock %}

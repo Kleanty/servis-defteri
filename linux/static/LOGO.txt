@@ -1,0 +1,6 @@
+Kendi logon varsa bu klasöre "logo.png" (veya logo.svg / logo.webp) adıyla koy.
+Koyarsan üst çubukta, giriş ekranında ve QR sayfasında yazı yerine logon görünür.
+Logo koyu lacivert zemin (#0b1f3a) üzerinde görüneceği için beyaz/açık renkli ve şeffaf arka planlı olmalı.
+Yükseklik 120-160 px yeterli. Dosya yoksa İşletme adı (ISLETME_ADI) yazı olarak gösterilir.
+
+Sekme ikonu ve paylaşım görseli için favicon*.png, apple-touch-icon.png, icon-*.png ve og-image.png dosyalarını da kendi ikonunla değiştir.

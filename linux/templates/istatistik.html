@@ -1,0 +1,67 @@
+{% extends 'base.html' %}{% block content %}
+<style>
+.kart-sayi{font-size:3rem;font-weight:800;line-height:1}
+.bar-satir{display:grid;grid-template-columns:4.2rem 1fr;gap:.5rem;align-items:center;padding:.35rem 0;border-bottom:1px solid #eee}
+.bar-satir.bugun{background:#fff8e1}
+.bar{height:.7rem;border-radius:.35rem;min-width:2px}
+.bar-g{background:#0d6efd}.bar-t{background:#198754}
+.nav-pills .nav-link{font-weight:600;border:1px solid #cfd8e3;padding:.5rem .4rem}
+</style>
+<h4 class="mb-3 d-flex justify-content-between align-items-center gap-2"><span>📊 İstatistik</span><a class="btn btn-outline-secondary btn-sm" href="{{url_for('hareketler')}}">🕘 Hareketler</a></h4>
+
+<ul class="nav nav-pills nav-fill mb-3 flex-nowrap gap-1" id="ist-sekmeler" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#ozet" type="button">Özet{% if bekleyen %} <span class="badge text-bg-danger">{{bekleyen|length}}</span>{% endif %}</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#bakim" type="button">Bakım{% if bakim %} <span class="badge text-bg-info">{{bakim|length}}</span>{% endif %}</button></li>
+</ul>
+
+<div class="tab-content">
+<!-- ÖZET -->
+<div class="tab-pane fade show active" id="ozet">
+  <div class="row g-3 mb-3">
+    <div class="col-4"><div class="card text-center shadow-sm border-primary h-100"><div class="card-body px-1"><div class="kart-sayi text-primary">{{gelen}}</div><div class="fw-semibold">Bugün gelen</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm border-success h-100"><div class="card-body px-1"><div class="kart-sayi text-success">{{tamam}}</div><div class="fw-semibold">Bugün tamamlanan</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm border-warning h-100"><div class="card-body px-1"><div class="kart-sayi text-warning">{{acik_toplam}}</div><div class="fw-semibold">Şu an açık iş</div><div class="small-muted">Beklemede {{acik.get('Beklemede',0)}} · Devam {{acik.get('Devam Ediyor',0)}}</div></div></div></div>
+  </div>
+
+  {% if bekleyen %}
+  <div class="card border-danger mb-3"><div class="card-header bg-danger text-white fw-semibold">⚠ {{bekleyen_gun}} günden uzun süredir açık işler ({{bekleyen|length}})</div>
+    <div class="table-responsive"><table class="table mb-0 align-middle"><tr><th>Plaka</th><th>Müşteri</th><th>Bekliyor</th><th>Durum</th><th>İş</th><th></th></tr>
+    {% for b in bekleyen %}<tr><td class="text-nowrap fw-semibold">{{b.plaka|plaka_goster}}</td><td>{{b.ad_soyad}}</td><td class="text-danger fw-bold text-nowrap">{{b.gun}} gün</td><td>{{b.durum}}</td><td>{{b.gelis_nedeni or '-'}}</td>
+      <td class="text-nowrap">{% if b.telefon %}<a class="btn btn-sm btn-outline-secondary" href="tel:{{b.telefon}}">📞</a> {% endif %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('is_emri_duzenle',is_emri_id=b.id)}}">Aç</a></td></tr>{% endfor %}
+    </table></div></div>
+  {% endif %}
+
+  <div class="card shadow-sm"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <h6 class="mb-0">Dönem</h6>
+      <div class="btn-group btn-group-sm" role="group">
+        {% for k,e in [('bugun','Bugün'),('7','Son 7 gün'),('30','Son 30 gün'),('ay','Bu ay')] %}<a class="btn {{ 'btn-primary' if donem==k else 'btn-outline-primary' }}" href="{{url_for('istatistik',donem=k)}}">{{e}}</a>{% endfor %}
+      </div>
+    </div>
+    <div class="row g-2 mb-2 text-center"><div class="col-6"><div class="fs-2 fw-bold text-primary">{{d_gelen}}</div><div class="small-muted">gelen araç</div></div><div class="col-6"><div class="fs-2 fw-bold text-success">{{d_tamam}}</div><div class="small-muted">tamamlanan</div></div></div>
+    {% if donem!='bugun' %}
+    <div class="small-muted mb-1"><span class="badge bar-g">&nbsp;</span> gelen &nbsp; <span class="badge bar-t">&nbsp;</span> tamamlanan</div>
+    {% for x in gunler %}<div class="bar-satir {{ 'bugun' if x.bugun }}"><div class="small"><b>{{x.gun}}</b> {{x.tarih}}</div>
+      <div><div class="d-flex align-items-center gap-2"><div class="bar bar-g" style="width:{{ (x.gelen/mx*100)|round(0) if x.gelen else 0 }}%"></div><span class="small">{{x.gelen}}</span></div>
+      <div class="d-flex align-items-center gap-2"><div class="bar bar-t" style="width:{{ (x.tamam/mx*100)|round(0) if x.tamam else 0 }}%"></div><span class="small">{{x.tamam}}</span></div></div></div>{% endfor %}
+    {% endif %}
+  </div></div>
+</div>
+
+<!-- BAKIM HATIRLATMA -->
+<div class="tab-pane fade" id="bakim">
+  <div class="card border-info"><div class="card-header fw-semibold">🔧 Son bakımından {{bakim_ay}} ay geçen araçlar ({{bakim|length}})</div>
+    {% if bakim %}<div class="table-responsive"><table class="table mb-0 align-middle"><tr><th>Plaka</th><th>Müşteri</th><th>Araç</th><th>Son bakım</th><th></th></tr>
+    {% for a in bakim %}<tr><td class="text-nowrap fw-semibold">{{a.plaka|plaka_goster}}</td><td>{{a.ad_soyad}}{% if a.telefon %}<div class="small-muted">{{a.telefon|tel_goster}}</div>{% endif %}</td><td>{{a.marka or ''}} {{a.model or ''}}</td><td class="text-nowrap">{{a.son}}<div class="small-muted">{{a.ay}} ay önce</div></td>
+      <td class="text-nowrap">{% set w=a|wa_bakim %}{% if w %}<a class="btn btn-sm btn-success" target="_blank" rel="noopener" href="{{w}}">WhatsApp</a> {% endif %}
+        <form class="d-inline" method="post" action="{{url_for('arac_hatirlatildi',arac_id=a.id)}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary" title="30 gün listede çıkmaz">Hatırlattım</button></form></td></tr>{% endfor %}
+    </table></div>
+    <div class="card-footer small-muted">Listeye, iş emrinde "periyodik" veya "yağ" geçen işi olan araçlar girer. Açık iş emri olan araçlar gösterilmez.</div>
+    {% else %}<div class="card-body text-muted">Şu an hatırlatılacak araç yok.</div>{% endif %}
+  </div>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+(function(){ var h=location.hash.replace('#',''); if(['bakim','ozet'].indexOf(h)>-1){ var b=document.querySelector('[data-bs-target="#'+h+'"]'); if(b) new bootstrap.Tab(b).show(); } })();
+</script>{% endblock %}

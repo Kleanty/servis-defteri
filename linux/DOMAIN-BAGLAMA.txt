@@ -1,0 +1,37 @@
+DOMAIN BAGLAMA (alanadiniz.com) - LINUX / RASPBERRY PI
+=======================================================
+
+Amac: sunucuda calisan uygulamayi https://alanadiniz.com adresinden acmak.
+Router'da port acmak gerekmez, HTTPS otomatik gelir.
+
+ADIM 1 - Cloudflare'e domain'i ekle, alan adını aldığın firmada nameserver'lari degistir
+  - cloudflare.com -> ucretsiz hesap -> "Add a site" -> alanadiniz.com (Free plan)
+  - Cloudflare'in verdigi iki nameserver'i alan adını aldığın firmanın panelinde mevcut nameserver'larin yerine yaz.
+  - Cloudflare'de domain "Active" olunca hazirdir (birkac saat surebilir).
+
+ADIM 2 - Sunucuda tuneli kur
+  - Cloudflare: Zero Trust -> Networks -> Tunnels -> Create a tunnel -> Cloudflared
+  - Isletim sistemi olarak Debian/Linux (mimariyi Pi icin arm64) sec.
+  - Gosterilen kurulum komutlarini sunucuda calistir (cloudflared systemd servisi olarak kurulur).
+
+ADIM 3 - Tunelde alanadiniz.com adresini localhost:5000'e bagla
+  - Tunelin "Public hostname" sekmesi -> Add a public hostname
+  - Domain: alanadiniz.com   Service: HTTP   URL: localhost:5000
+  - Tarayicida https://alanadiniz.com acilmali.
+
+ADIM 4 - .env icine PUBLIC_BASE_URL yaz ve yeniden baslat
+  *** DIKKAT: Bunu SADECE site https://alanadiniz.com adresinde acildiktan SONRA yap. ***
+  Once yazarsan, o arada basilan etiketlerin QR kodu acilmayan bir adrese gider.
+
+  nano .env                # PUBLIC_BASE_URL=https://alanadiniz.com
+  sudo systemctl restart servis-defteri
+
+
+SORUN GIDERME
+-------------
+"Bu site ulasilamiyor": nameserver henuz yayilmamis olabilir (Cloudflare'de "Active" mi?);
+  tunel servisi: sudo systemctl status cloudflared
+Cloudflare 502: tunel var ama uygulama yok -> curl http://localhost:5000 ; sudo systemctl restart servis-defteri
+  Hostname'de HTTP ve localhost:5000 secili olmali.
+Cloudflare 1033: tunel bagli degil -> sudo systemctl restart cloudflared ; internet baglantisini kontrol et.
+Ayrinti: sudo journalctl -u servis-defteri -n 50 --no-pager

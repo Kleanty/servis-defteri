@@ -1,0 +1,27 @@
+{# Ortak işlem seçici: sık kullanılanlar, seçilen etiketler, TEK arama kutusu (yazdıkça liste süzülür), kapalı kategoriler, "listeye ekle".
+   Kullanım: {{ islem_secici('gelis_nedeni', deger, 'Ne yapılacak?', sik, ozel, kategoriler, ekle_url, csrf) }} ; sayfa sonunda {% include '_islem_js.html' %} #}
+{% macro islem_secici(ad, deger, baslik, sik, ozel, kategoriler, ekle_url, csrf, ipucu='Yaz veya listeden seç: balata, akü, klima…') %}
+<div class="islem-secici" data-islem-secici data-ekle="{{ekle_url}}" data-csrf="{{csrf}}">
+  <label class="form-label fw-semibold mt-3" for="{{ad}}">{{baslik}} <span class="small-muted fw-normal">(dokunarak seç, istersen yaz)</span></label>
+  <div class="sik-serit d-flex flex-wrap gap-2 mb-2">{% for c in sik %}<button type="button" class="btn btn-outline-secondary chip" data-chip="{{c}}" aria-pressed="false">{{c}}</button>{% endfor %}</div>
+  <div class="secilen d-flex flex-wrap gap-2 mb-2 d-none" aria-live="polite"></div>
+  <input id="{{ad}}" name="{{ad}}" class="form-control form-control-lg is-input" value="{{deger or ''}}" maxlength="500" placeholder="{{ipucu}}" autocomplete="off" enterkeyhint="done">
+  <div class="is-hata small text-danger fw-semibold mt-1 d-none"></div>
+  <div class="is-bilgi small text-success fw-semibold mt-1 d-none" aria-live="polite"></div>
+  <button type="button" class="btn btn-success w-100 py-2 fw-semibold mt-2 ekle-btn d-none"></button>
+  <div class="mt-2 is-liste">
+    <details class="mt-2 kat ozel-kat {{'' if ozel else 'd-none'}}">
+      <summary class="fw-semibold py-2">⭐ Eklediklerim <span class="badge text-bg-primary ms-1 d-none kat-sayi"></span></summary>
+      <div class="small-muted ozel-ipucu d-none pb-2">Silmek istediğine dokun. (Eski iş emirleri değişmez.)</div>
+      <div class="d-flex flex-wrap gap-2 pb-2 ozel-liste">{% for c in ozel %}<button type="button" class="btn btn-outline-secondary chip" data-chip="{{c}}" aria-pressed="false">{{c}}</button>{% endfor %}</div>
+      <button type="button" class="btn btn-link btn-sm px-0 ozel-duzenle">✎ Listemi düzenle</button>
+    </details>
+    {% for ikon,kad,liste in kategoriler %}
+    <details class="mt-2 kat">
+      <summary class="fw-semibold py-2">{{ikon}} {{kad}} <span class="badge text-bg-primary ms-1 d-none kat-sayi"></span></summary>
+      <div class="d-flex flex-wrap gap-2 pb-2">{% for c in liste %}<button type="button" class="btn btn-outline-secondary chip" data-chip="{{c}}" aria-pressed="false">{{c}}</button>{% endfor %}</div>
+    </details>
+    {% endfor %}
+  </div>
+</div>
+{% endmacro %}

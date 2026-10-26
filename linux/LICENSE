@@ -1,0 +1,44 @@
+Servis Defteri - Yalnızca İnceleme Lisansı (View-Only / Source-Available License)
+Telif hakkı (c) 2026 Servis Defteri. Tüm hakları saklıdır. / Copyright (c) 2026 Servis Defteri. All rights reserved.
+
+TÜRKÇE
+------
+Bu depodaki yazılım, belgeler, görseller ve diğer tüm dosyalar ("Yazılım") YALNIZCA İNCELEME amacıyla herkese açıktır.
+
+İZİN VERİLEN: Kaynak kodu GitHub üzerinde okumak ve incelemek.
+
+İZİN VERİLMEYEN (yazılı izin olmadan): Yazılımı çalıştırmak, kurmak, kullanmak (kişisel, ticari veya kurum içi
+kullanım dahil); kopyalamak, değiştirmek, uyarlamak, birleştirmek, yayımlamak, dağıtmak, alt lisanslamak,
+satmak, barındırmak ya da bir hizmet olarak sunmak; Yazılımdan türetilmiş eserler üretmek; Yazılımı yapay zekâ/makine öğrenmesi
+modellerini eğitmek için kullanmak. Bu Yazılım kullanıma HAZIR DEĞİLDİR ve kullanım için lisanslanmamıştır.
+
+Kullanım hakkı için telif hakkı sahibinden önceden yazılı izin alınmalıdır. Bu lisansta açıkça verilmeyen
+tüm haklar saklıdır. GitHub'ın Hizmet Şartları'nın, herkese açık depoları görüntüleme ve depo çatallama (fork) için tanıdığı
+haklar bu lisansı değiştirmez; bu haklar yalnızca GitHub platformu üzerinde işlev içindir ve Yazılımı
+kullanma izni vermez.
+
+Üçüncü taraf bileşenler (ör. Bootstrap, DejaVu yazı tipi) kendi lisansları altındadır; bkz. static/vendor/ ve static/fonts/.
+
+YAZILIM "OLDUĞU GİBİ", HİÇBİR GARANTİ OLMAKSIZIN SUNULUR. YAZARLAR, YAZILIMIN KULLANILMASINDAN VEYA İNCELENMESİNDEN
+DOĞAN HİÇBİR ZARARDAN SORUMLU DEĞİLDİR.
+
+ENGLISH
+-------
+The software, documentation, images and all other files in this repository (the "Software") are made publicly
+visible FOR INSPECTION ONLY.
+
+ALLOWED: Reading and inspecting the source code on GitHub.
+
+NOT ALLOWED (without prior written permission): running, installing or using the Software (personal, commercial or
+internal use included); copying, modifying, adapting, merging, publishing, distributing, sublicensing, selling, hosting
+or offering it as a service; creating derivative works; using it to train AI/machine-learning models.
+The Software is NOT READY FOR USE and is not licensed for use.
+
+Any use requires prior written permission from the copyright holder. All rights not expressly granted are reserved.
+The rights that GitHub's Terms of Service grant for viewing public repositories and forking them apply only to
+functionality on the GitHub platform and do not grant any permission to use the Software.
+
+Third-party components (e.g. Bootstrap, DejaVu font) remain under their own licenses; see static/vendor/ and static/fonts/.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE AUTHORS SHALL NOT BE LIABLE FOR ANY DAMAGES
+ARISING FROM THE USE OR INSPECTION OF THE SOFTWARE.

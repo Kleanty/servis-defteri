@@ -1,0 +1,31 @@
+# systemd servisi şablonu. scripts/kurulum.sh bunu SENİN kullanıcı adın ve klasörünle otomatik üretir
+# (deploy/servis-defteri.service). Elle kuracaksan KULLANICI ve DIZIN yerlerini değiştir.
+[Unit]
+Description=Servis Defteri - oto servis yonetimi
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=KULLANICI
+# USB etiket yazıcısına (doğrudan USB veya /dev/usb/lp0) yazabilmek için servis 'lp' grubunun yetkisiyle çalışır
+SupplementaryGroups=lp
+WorkingDirectory=DIZIN
+EnvironmentFile=-DIZIN/.env
+# Yalnızca bu makineden (ters vekil / tünel) erişilir. Yerel ağdan denemek için geçici olarak 0.0.0.0 yap.
+ExecStart=DIZIN/venv/bin/waitress-serve --host=127.0.0.1 --port=5000 --threads=4 app:app
+Restart=on-failure
+RestartSec=5
+
+# Sertleştirme: uygulama ele geçirilse bile sisteme zarar vermesini zorlaştırır
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=DIZIN/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

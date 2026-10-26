@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% block content %}
+<h4 class="mb-1">🕘 Hareketler</h4>
+<div class="small-muted mb-3">Hangi cihaz ne zaman ne yaptı. Son {{gun}} gün tutulur, sonra kendiliğinden silinir. Müşteri adı ve telefon kayda yazılmaz.</div>
+{% if ben %}<div class="alert alert-info py-2">Bu cihaz: <b>{{ben.ad}} · #{{ben.kod}}</b></div>{% endif %}
+<details class="card shadow-sm mb-3"><summary class="card-header fw-semibold" style="cursor:pointer">📱 Cihazlar ({{cihazlar|length}})</summary>
+  <div class="list-group list-group-flush">{% for c in cihazlar %}
+    <form method="post" action="{{url_for('hareketler_cihaz_ad',cid=c.id)}}" class="list-group-item d-flex gap-2 align-items-center flex-wrap">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="flex-grow-1" style="min-width:12rem"><input class="form-control" name="ad" value="{{c.ad}}" maxlength="30" minlength="2"><div class="small-muted mt-1">#{{c.kod}} · son: {{c.son[:16] if c.son else '-'}} · {{c.n}} kayıt</div></div>
+      <button class="btn btn-outline-primary btn-sm">Adı kaydet</button>
+      <a class="btn btn-outline-secondary btn-sm" href="{{url_for('hareketler',cihaz=c.id)}}">Süz</a>
+    </form>{% else %}<div class="list-group-item text-muted">Henüz cihaz yok.</div>{% endfor %}</div></details>
+{% if cid %}<div class="mb-2"><a href="{{url_for('hareketler')}}" class="btn btn-sm btn-outline-secondary">✖ Süzmeyi kaldır</a></div>{% endif %}
+<div class="list-group shadow-sm mb-3">
+{% for r in satir %}<div class="list-group-item py-2"><div class="d-flex justify-content-between gap-2"><span class="fw-semibold text-break">{{r.cihaz}}</span><span class="small-muted text-nowrap">{{r.zaman[8:10]}}.{{r.zaman[5:7]}} {{r.zaman[11:16]}}</span></div><div class="text-break">{{r.olay}}</div><div class="small-muted">IP {{r.ip}}</div></div>
+{% else %}<div class="list-group-item text-center text-muted py-5">Henüz kayıt yok.</div>{% endfor %}
+</div>
+<div class="d-flex gap-2 mb-3">{% if sayfa>1 %}<a class="btn btn-outline-secondary" href="{{url_for('hareketler',s=sayfa-1,cihaz=cid)}}">◀ Daha yeni</a>{% endif %}{% if sonra %}<a class="btn btn-outline-secondary" href="{{url_for('hareketler',s=sayfa+1,cihaz=cid)}}">Daha eski ▶</a>{% endif %}</div>
+<a class="btn btn-outline-secondary" href="{{url_for('istatistik')}}">← İstatistik</a>
+{% endblock %}

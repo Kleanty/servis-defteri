@@ -1,0 +1,21 @@
+{% extends 'base.html' %}{% block content %}
+<h4 class="mb-1">⭐ Eklediklerim</h4>
+<div class="small-muted mb-3">Hazır listede olmayan işlemleri buraya ekle. İş emri yazarken “⭐ Eklediklerim” bölümünde ve yazarken öneri olarak çıkar. Birden fazla eklemek için virgülle ayır.</div>
+
+<form method="post" action="{{url_for('eklediklerim_ekle')}}" class="mb-4" autocomplete="off">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="input-group input-group-lg">
+    <input class="form-control" name="ad" maxlength="200" placeholder="Örn: Lpg tank değişimi, Egzoz kaynağı" enterkeyhint="done" autofocus aria-label="Örn: Lpg tank değişimi, Egzoz kaynağı">
+    <button class="btn btn-primary px-4 fw-bold">➕ Ekle</button>
+  </div>
+</form>
+
+<div class="card shadow-sm mb-3"><div class="card-header fw-semibold d-flex justify-content-between">Listem <span class="badge text-bg-primary">{{liste|length}}</span></div>
+<div class="list-group list-group-flush">
+{% for r in liste %}<div class="list-group-item d-flex justify-content-between align-items-center gap-2 py-3">
+  <span class="fs-6">{{r.ad}}</span>
+  <form method="post" action="{{url_for('eklediklerim_sil',islem_id=r.id)}}" data-confirm="“{{r.ad}}” listenden silinsin mi? (Eski iş emirleri değişmez.)"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger btn-sm" aria-label="{{r.ad}} sil">🗑️ Sil</button></form>
+</div>{% else %}<div class="list-group-item text-center text-muted py-5">Henüz bir şey eklemedin.<br>Yukarıdaki kutuya yazıp “Ekle”ye bas.</div>{% endfor %}
+</div></div>
+<a class="btn btn-outline-secondary" href="{{url_for('dashboard')}}">← Panele dön</a>
+{% endblock %}

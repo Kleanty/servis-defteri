@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% block content %}
+<form class="mb-3" action="{{url_for('ara')}}"><div class="input-group input-group-lg"><input class="form-control" name="q" value="{{q}}" placeholder="🔍 Plaka veya müşteri ara" autocomplete="off" aria-label="Plaka veya müşteri ara"><button class="btn btn-primary px-4">Ara</button></div></form>
+
+{% if not ars and not ms %}
+<div class="alert alert-secondary bildirim">“{{q}}” için kayıt bulunamadı.</div>
+<a class="btn btn-amber btn-lg w-100 py-3 fw-bold" href="{{url_for('is_emirleri',yeni=q)}}#yeni">➕ “{{q}}” için yeni iş emri aç</a>
+{% endif %}
+
+{% if ars %}<h5 class="mb-2">🚗 Araçlar</h5>
+<div class="row row-cols-1 row-cols-lg-2 g-2 mb-4">{% for a in ars %}
+<div class="col"><div class="card shadow-sm h-100"><div class="card-body">
+  <div class="fs-3 fw-bold lh-1">{{a.plaka|plaka_goster}}</div>
+  <div class="fw-semibold mt-1">{{a.ad_soyad}}</div>
+  <div class="small-muted">{{(a.marka or '')~' '~(a.model or '')}}{% if a.telefon %} · {{a.telefon|tel_goster}}{% endif %}</div>
+  <div class="d-grid gap-2 mt-3" style="grid-template-columns:2fr 1fr 1fr">
+    <a class="btn btn-amber fw-bold" href="{{url_for('is_emirleri',yeni=a.plaka)}}#yeni">📋 İş Emri Aç</a>
+    {% if a.telefon|tel_ara %}<a class="btn btn-outline-primary" href="{{a.telefon|tel_ara}}" aria-label="Ara">📞</a><a class="btn btn-outline-success" target="_blank" rel="noopener" href="{{a.telefon|wa_tel}}" aria-label="WhatsApp">💬</a>{% else %}<span></span><span></span>{% endif %}
+  </div>
+  <a class="small d-inline-block mt-2" href="{{url_for('arac_duzenle',arac_id=a.id)}}">Aracı düzenle</a>
+</div></div></div>{% endfor %}</div>{% endif %}
+
+{% if ms %}<h5 class="mb-2">👤 Müşteriler</h5>
+<div class="list-group mb-4">{% for m in ms %}
+<div class="list-group-item d-flex justify-content-between align-items-center gap-2 py-3">
+  <a class="text-decoration-none text-dark flex-grow-1" href="{{url_for('araclar',musteri=m.id)}}"><b>{{m.ad_soyad}}</b><br><span class="small-muted">{{m.telefon|tel_goster}}</span></a>
+  {% if m.telefon|tel_ara %}<a class="btn btn-outline-primary" href="{{m.telefon|tel_ara}}" aria-label="Ara">📞</a><a class="btn btn-outline-success" target="_blank" rel="noopener" href="{{m.telefon|wa_tel}}" aria-label="WhatsApp">💬</a>{% endif %}
+</div>{% endfor %}</div>{% endif %}
+{% endblock %}

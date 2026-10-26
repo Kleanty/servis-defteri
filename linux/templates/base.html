@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#141615"><link rel="icon" href="/static/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48.png"><link rel="icon" type="image/png" sizes="96x96" href="/static/favicon-96.png"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<title>{% block title %}{{isletme.ad}}{% endblock %}</title>
+<link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+<style>
+body{padding-bottom:96px}
+.btn{min-height:44px}
+.table td,.table th{vertical-align:middle}
+.small-muted{font-size:.85rem;color:#6c757d}
+:root{--bs-primary:#1f8f5f;--bs-primary-rgb:31,143,95;--bs-link-color:#1f8f5f;--bs-link-hover-color:#177049;--navy:#141615;--navy2:#1f8f5f;--amber:#fbbf24}
+body{background:#f1f5f9}
+.btn-primary{--bs-btn-bg:#1f8f5f;--bs-btn-border-color:#1f8f5f;--bs-btn-hover-bg:#177049;--bs-btn-hover-border-color:#177049;--bs-btn-active-bg:#177049;--bs-btn-active-border-color:#177049;--bs-btn-disabled-bg:#1f8f5f;--bs-btn-disabled-border-color:#1f8f5f}
+.btn-outline-primary{--bs-btn-color:#1f8f5f;--bs-btn-border-color:#1f8f5f;--bs-btn-hover-bg:#1f8f5f;--bs-btn-hover-border-color:#1f8f5f;--bs-btn-active-bg:#1f8f5f;--bs-btn-active-border-color:#1f8f5f}
+.text-bg-primary{background-color:#1f8f5f!important}
+.border-devam{border-color:#1f6fb5!important}.text-bg-devam{color:#fff!important;background-color:#1f6fb5!important}      /* "Devam Ediyor": yeşil tema içinde "Tamamlandı"dan ayrışsın */
+.btn-amber{--bs-btn-color:#1e1b0b;--bs-btn-bg:#fbbf24;--bs-btn-border-color:#fbbf24;--bs-btn-hover-color:#1e1b0b;--bs-btn-hover-bg:#f59e0b;--bs-btn-hover-border-color:#f59e0b;--bs-btn-active-color:#1e1b0b;--bs-btn-active-bg:#f59e0b;--bs-btn-active-border-color:#f59e0b;--bs-btn-disabled-color:#1e1b0b;--bs-btn-disabled-bg:#fbbf24;--bs-btn-disabled-border-color:#fbbf24}
+.navbar{background:linear-gradient(160deg,#141615,#2b3037)!important;border-bottom:3px solid #d62828}
+.marka-yazi{font-weight:800;letter-spacing:.16em;color:#fff;text-decoration:none;white-space:nowrap}.amb{color:#7ee2a8}
+.logo-chip{display:inline-flex;background:transparent;border-radius:0;padding:0}.logo-chip img{height:44px;width:auto;display:block}.marka-ad{margin-left:10px;font-family:Georgia,'Times New Roman',serif;font-size:1.05rem;letter-spacing:.08em}
+.card{border-radius:16px;border-color:#e2e8f0}
+.btn-mini{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:7px 14px;border-radius:99px;border:1px solid #cbd5e1;background:#fff;color:#141615;font-weight:600;font-size:.88rem;text-decoration:none;box-shadow:0 1px 2px rgba(15,23,42,.06);transition:transform .12s,box-shadow .12s,background .12s,border-color .12s}
+.btn-mini:hover{background:#141615;border-color:#141615;color:#fff;transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.18)}
+.btn-mini:active{transform:none}.btn-mini.ik{padding:7px 11px}
+.aksiyon{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.aksiyon .btn,.aksiyon form .btn{min-height:46px;border-radius:12px;font-weight:600;font-size:.92rem;padding:8px 6px;white-space:nowrap}.aksiyon form{margin:0}
+@media(max-width:380px){.aksiyon .btn{font-size:.82rem}}
+.nav-pills{--bs-nav-pills-link-active-bg:#1f8f5f}
+
+/* alt menü (mobil) */
+.altmenu{position:fixed;left:0;right:0;bottom:0;z-index:1030;background:#141615;display:flex;align-items:stretch;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,.25)}
+.altmenu a{flex:1;color:#adb5bd;text-decoration:none;text-align:center;padding:8px 2px 6px;font-size:.78rem;line-height:1.1}
+.altmenu a .ik{display:block;font-size:1.5rem;line-height:1.3}
+.altmenu a.on{color:#fbbf24;font-weight:700}
+.altmenu a.yeni{flex:0 0 76px;position:relative}
+.altmenu a.yeni .ik{position:absolute;left:50%;top:-22px;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;background:#fbbf24;color:#1e1b0b;font-size:2.2rem;line-height:60px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.altmenu a.yeni span.tx{display:block;margin-top:34px;color:#fbbf24;font-weight:700}
+@media(min-width:768px){.altmenu{display:none}body{padding-bottom:40px}}
+/* büyük bildirim */
+.bildirim{font-size:1.15rem;font-weight:600;border-width:2px}
+</style></head>
+<body class="bg-light">
+{% set ep=request.endpoint %}
+<nav class="navbar navbar-dark bg-dark mb-3"><div class="container-fluid">
+  <a class="marka-yazi navbar-brand" href="{{url_for('dashboard')}}">{% if logo %}<span class="d-inline-flex align-items-center"><span class="logo-chip"><img src="{{logo}}" alt="{{isletme.ad}}"></span><span class="marka-ad d-none d-md-inline">{{isletme.kisa_html}}</span></span>{% else %}{{isletme.kisa_html}}{% endif %}</a>
+  <div class="d-none d-md-flex gap-2">
+    <a class="btn btn-outline-light" href="{{url_for('dashboard')}}">Panel</a>
+    <a class="btn btn-outline-light" href="{{url_for('musteriler')}}">Müşteriler</a>
+    <a class="btn btn-outline-light" href="{{url_for('araclar')}}">Araçlar</a>
+    <a class="btn btn-outline-light" href="{{url_for('is_emirleri')}}">İş Emirleri</a>
+    <a class="btn btn-amber fw-bold" href="{{url_for('is_emirleri')}}#yeni">➕ Yeni İş Emri</a>
+  </div>
+  <div class="d-flex gap-2">
+    {% if eslesmeyen %}<a class="btn btn-warning fw-bold" href="{{url_for('eslesmeyen_kayitlar')}}" title="Dış sistemden gelen, eşleşmeyen kayıtlar">🔗 Eşleşmeyen <span class="badge text-bg-danger">{{eslesmeyen}}</span></a>{% endif %}
+    <a class="btn btn-outline-warning {{'active' if ep=='eklediklerim'}}" href="{{url_for('eklediklerim')}}" title="Kendi eklediğim işlemler">⭐<span class="d-none d-sm-inline"> Eklediklerim</span></a>
+    <a class="btn btn-outline-warning" href="{{url_for('istatistik')}}">📊<span class="d-none d-sm-inline"> İstatistik</span></a>
+    <a class="btn btn-outline-info" href="{{url_for('anasayfa')}}" title="Müşterilerin gördüğü web sitesi">🌐<span class="d-none d-sm-inline"> Web Sitesi</span></a>
+    <form method="post" action="{{url_for('logout')}}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn btn-outline-danger">Çıkış</button></form>
+  </div>
+</div></nav>
+<main class="container-fluid px-3">{% if veri_uyari %}<div class="alert alert-danger bildirim" role="alert">🚨 {{veri_uyari}}</div>{% endif %}
+{% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="alert alert-{{c}} bildirim" role="alert">{{'✅' if c=='success' else '⛔' if c in ('danger','error') else '⚠️'}} {{m}}</div>{% endfor %}{% endwith %}
+{% block content %}{% endblock %}
+{% if yedek and yedek.kotu and request.endpoint!='dashboard' %}<div class="small text-danger text-center mt-4 mb-2">💾 {{yedek.metin}} Yedekleme çalışmıyor olabilir.</div>{% endif %}
+</main>
+<nav class="altmenu" aria-label="Ana menü">
+  <a href="{{url_for('dashboard')}}" class="{{'on' if ep=='dashboard'}}"><span class="ik">🏠</span>Panel</a>
+  <a href="{{url_for('is_emirleri')}}" class="{{'on' if ep=='is_emirleri'}}"><span class="ik">📋</span>İş Emirleri</a>
+  <a href="{{url_for('is_emirleri')}}#yeni" class="yeni" aria-label="Yeni iş emri"><span class="ik">＋</span><span class="tx">Yeni</span></a>
+  <a href="{{url_for('araclar')}}" class="{{'on' if ep and ep.startswith('arac')}}"><span class="ik">🚗</span>Araçlar</a>
+  <a href="{{url_for('musteriler')}}" class="{{'on' if ep and ep.startswith('musteri')}}"><span class="ik">👤</span>Müşteriler</a>
+</nav>
+
+<div class="modal fade" id="onayModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <div class="modal-body text-center p-4">
+    <div class="display-4" id="onayIkon">⚠️</div>
+    <div class="fs-4 fw-bold my-3" id="onayMetin"></div>
+    <div class="d-grid gap-2"><button type="button" class="btn btn-danger btn-lg py-3 fw-bold" id="onayEvet">Evet</button><button type="button" class="btn btn-outline-secondary btn-lg py-3" data-bs-dismiss="modal">Vazgeç</button></div>
+  </div>
+</div></div></div>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+<script>
+// data-confirm="Soru?" olan form/buton için büyük onay penceresi (tarayıcının küçük confirm kutusu yerine)
+(function(){
+  var el=document.getElementById('onayModal'), m=new bootstrap.Modal(el), hedef=null;
+  function sor(msg,fn,olumlu){
+    document.getElementById('onayMetin').textContent=msg; hedef=fn;
+    var ev=document.getElementById('onayEvet'); ev.className='btn btn-lg py-3 fw-bold '+(olumlu?'btn-success':'btn-danger'); document.getElementById('onayIkon').textContent=olumlu?'✅':'⚠️'; m.show();
+  }
+  document.getElementById('onayEvet').addEventListener('click',function(){ var f=hedef; hedef=null; m.hide(); if(f) f(); });
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-confirm],a[data-confirm]'); if(!b||b.dataset.onayli) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    sor(b.dataset.confirm,function(){ b.dataset.onayli='1'; b.click(); },!!b.dataset.olumlu);
+  },true);
+  document.addEventListener('submit',function(e){
+    var f=e.target; if(!f.dataset||!f.dataset.confirm||f.dataset.onayli) return;
+    e.preventDefault(); sor(f.dataset.confirm,function(){ f.dataset.onayli='1'; f.submit(); },!!f.dataset.olumlu);
+  },true);
+  // başarı bildirimi birkaç saniye sonra kendiliğinden kapanır; hata/uyarı kalır
+  setTimeout(function(){ document.querySelectorAll('.alert-success.bildirim').forEach(function(a){ a.style.display='none'; }); },6000);
+})();
+</script>
+{% block scripts %}{% endblock %}
+</body></html>

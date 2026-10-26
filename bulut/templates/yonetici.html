@@ -1,0 +1,45 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#141615"><link rel="icon" href="/static/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48.png"><link rel="icon" type="image/png" sizes="96x96" href="/static/favicon-96.png"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png"><link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet"><title>{{isletme.ad}}</title>
+<style>
+:root{--bs-primary:#1f8f5f;--bs-primary-rgb:31,143,95;--bs-link-color:#1f8f5f;--bs-link-hover-color:#177049;--navy:#141615;--navy2:#1f8f5f;--amber:#fbbf24}
+body{background:#f1f5f9}
+.btn-primary{--bs-btn-bg:#1f8f5f;--bs-btn-border-color:#1f8f5f;--bs-btn-hover-bg:#177049;--bs-btn-hover-border-color:#177049;--bs-btn-active-bg:#177049;--bs-btn-active-border-color:#177049;--bs-btn-disabled-bg:#1f8f5f;--bs-btn-disabled-border-color:#1f8f5f}
+.btn-outline-primary{--bs-btn-color:#1f8f5f;--bs-btn-border-color:#1f8f5f;--bs-btn-hover-bg:#1f8f5f;--bs-btn-hover-border-color:#1f8f5f;--bs-btn-active-bg:#1f8f5f;--bs-btn-active-border-color:#1f8f5f}
+.text-bg-primary{background-color:#1f8f5f!important}
+.btn-amber{--bs-btn-color:#1e1b0b;--bs-btn-bg:#fbbf24;--bs-btn-border-color:#fbbf24;--bs-btn-hover-color:#1e1b0b;--bs-btn-hover-bg:#f59e0b;--bs-btn-hover-border-color:#f59e0b;--bs-btn-active-color:#1e1b0b;--bs-btn-active-bg:#f59e0b;--bs-btn-active-border-color:#f59e0b;--bs-btn-disabled-color:#1e1b0b;--bs-btn-disabled-bg:#fbbf24;--bs-btn-disabled-border-color:#fbbf24}
+.navbar{background:linear-gradient(160deg,#141615,#2b3037)!important}
+.marka-yazi{font-weight:800;letter-spacing:.16em;color:#fff;text-decoration:none;white-space:nowrap}.amb{color:#fbbf24}
+.logo-chip{display:inline-flex;background:transparent;border-radius:0;padding:0}.logo-chip img{height:120px;width:auto;display:block;margin:0 auto 6px}.amb{color:#7ee2a8}
+.card{border-radius:16px;border-color:#e2e8f0}
+body{min-height:100vh;background:linear-gradient(160deg,#141615,#2b3037);display:block;padding:18px 0}.marka-yazi{font-size:1.3rem}</style></head>
+<body><div class="container" style="max-width:960px">
+<div class="d-flex justify-content-between align-items-center mb-3"><span class="marka-yazi">Servis <span class="amb">Defteri</span> <small class="text-white-50 fw-normal" style="letter-spacing:0">· Yönetici</small></span>
+<form method="post" action="{{url_for('yonetici_cikis')}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-light btn-sm">Çıkış</button></form></div>
+{% for c,m in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{c}} fw-semibold">{{m}}</div>{% endfor %}
+{% if yeni %}<div class="alert alert-success border-3" role="alert"><div class="fw-bold mb-1">✅ {{yeni.ad}} — {{yeni.ne}}</div>
+{% if yeni.api %}<div>API anahtarı: <b class="user-select-all" style="word-break:break-all">{{yeni.api}}</b></div>
+<div class="small mt-1">Bu anahtar <b>yalnızca şimdi</b> görünür, saklanmaz; entegrasyonu kuracak firmaya güvenli kanaldan ilet. Önceki anahtar artık çalışmaz.</div>
+{% else %}<div>Kullanıcı adı: <b class="user-select-all">{{yeni.kullanici}}</b> &nbsp; Geçici şifre: <b class="user-select-all fs-5">{{yeni.sifre}}</b></div>
+<div class="small mt-1">Bu şifre <b>yalnızca şimdi</b> görünür; dükkâna ilet. İlk girişte kendi şifresini seçecek.</div>{% endif %}</div>{% endif %}
+<div class="card p-3 mb-3 shadow border-0"><div class="fw-bold mb-2">➕ Yeni dükkân</div>
+<form method="post" action="{{url_for('yonetici_ekle')}}" class="row g-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="col-md-4"><input class="form-control" name="ad" placeholder="Dükkân adı (örn. Ahmet Oto)" required maxlength="60" aria-label="Dükkân adı (örn. Ahmet Oto)"></div>
+<div class="col-md-3"><input class="form-control" name="kullanici" placeholder="Kullanıcı adı (ahmet-oto)" required maxlength="30" autocapitalize="none" spellcheck="false" aria-label="Kullanıcı adı (ahmet-oto)"></div>
+<div class="col-md-2"><input class="form-control" name="tel" placeholder="Telefon" maxlength="20" inputmode="tel" aria-label="Telefon"></div>
+<div class="col-md-3"><input class="form-control" name="adres" placeholder="Adres (isteğe bağlı)" maxlength="200" aria-label="Adres (isteğe bağlı)"></div>
+<div class="col-12"><button class="btn btn-amber fw-bold">Dükkânı aç ve geçici şifre üret</button></div></form></div>
+<div class="card p-3 shadow border-0"><div class="fw-bold mb-2">🏪 Dükkânlar ({{dukkanlar|length}})</div>
+{% if not dukkanlar %}<div class="text-muted">Henüz dükkân yok. Yukarıdan ilkini aç.</div>{% endif %}
+{% for d in dukkanlar %}<div class="border-top py-2">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+<div><b>{{d.ad}}</b> {% if not d.aktif %}<span class="badge text-bg-secondary">kapalı</span>{% endif %}{% if d.gecici %}<span class="badge text-bg-warning">ilk giriş bekliyor</span>{% endif %}{% if d.bozuk %}<span class="badge text-bg-danger">veritabanı açılamadı</span>{% endif %}
+<div class="small text-muted">@{{d.kullanici}} · {{d.is_emri}} iş emri · yedek: <span class="{{'text-danger fw-semibold' if d.yedek_kotu}}">{{d.yedek}}</span></div></div>
+<div class="d-flex gap-2">
+<form method="post" action="{{url_for('yonetici_sifre_sifirla',i=d.id)}}" onsubmit="return confirm(this.dataset.soru)" data-soru="{{d.ad}} için yeni geçici şifre üretilsin mi? Eski şifre ve açık oturumlar geçersiz olur."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-primary btn-sm">🔑 Şifre sıfırla</button></form>
+<form method="post" action="{{url_for('yonetici_durum',i=d.id)}}" onsubmit="return confirm(this.dataset.soru)" data-soru="{{d.ad}} {{'yeniden açılsın' if not d.aktif else 'kapatılsın (verisi silinmez, giriş yapamaz)'}} mı?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-{{'success' if not d.aktif else 'danger'}} btn-sm">{{'Aç' if not d.aktif else 'Kapat'}}</button></form></div></div>
+<div class="d-flex gap-2 mt-1 align-items-center"><span class="small text-muted">Dış sistem API'si: {% if d.api %}<b class="text-success">açık</b>{% else %}kapalı{% endif %}</span>
+<form method="post" action="{{url_for('yonetici_api',i=d.id)}}" onsubmit="return confirm(this.dataset.soru)" data-soru="{{d.ad}} için {{'yeni API anahtarı üretilsin mi? Eski anahtar çalışmaz olur.' if d.api else 'API anahtarı üretilsin mi? Anahtar yalnızca bir kez gösterilir.'}}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="eylem" value="uret"><button class="btn btn-outline-secondary btn-sm">🔗 {{'Anahtarı yenile' if d.api else 'API anahtarı üret'}}</button></form>
+{% if d.api %}<form method="post" action="{{url_for('yonetici_api',i=d.id)}}" onsubmit="return confirm(this.dataset.soru)" data-soru="{{d.ad}} için API kapatılsın mı? Mevcut anahtar çalışmaz olur."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="eylem" value="kapat"><button class="btn btn-outline-danger btn-sm">API'yi kapat</button></form>{% endif %}</div>
+<details class="mt-1"><summary class="small text-muted">Bilgileri düzenle</summary>
+<form method="post" action="{{url_for('yonetici_bilgi',i=d.id)}}" class="row g-2 mt-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="col-md-4"><input class="form-control form-control-sm" name="ad" value="{{d.ad}}" required maxlength="60"></div><div class="col-md-3"><input class="form-control form-control-sm" name="tel" value="{{d.tel or ''}}" maxlength="20" placeholder="Telefon" aria-label="Telefon"></div><div class="col-md-3"><input class="form-control form-control-sm" name="adres" value="{{d.adres or ''}}" maxlength="200" placeholder="Adres" aria-label="Adres"></div><div class="col-md-2"><button class="btn btn-sm btn-outline-secondary w-100">Kaydet</button></div></form></details></div>{% endfor %}</div>
+</div></body></html>
