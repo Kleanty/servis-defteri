@@ -7,6 +7,7 @@ SQLite yedekleme API'si kullanılır (çalışan veritabanında güvenli); büt�
 Uygulama kodunu İÇE AKTARMAZ (yönetici şifresi üretimi gibi yan etkiler olmasın).
 """
 import os, sys, sqlite3, shutil, subprocess, time
+os.umask(0o077)      # yedekler yalnız çalıştıran kullanıcıya açık
 from datetime import datetime
 
 os.umask(0o077)      # yedekler yalnızca bu kullanıcıya açık

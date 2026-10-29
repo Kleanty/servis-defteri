@@ -8,10 +8,16 @@
 - Şifre **PBKDF2-SHA256, 600.000 tur** ile saklanır (`data/.password_hash`, 0600).
 - `SECRET_KEY` ortamdan verilir ya da `data/.secret_key` olarak otomatik üretilir (0600).
 - **CSRF** belirteci tüm POST formlarında; yanlış giriş sınırı dakikada 5/IP.
-- Oturum 14 gün (9 günlük bayram tatili aşılsın diye); her girişte/kullanımda süre yeniden başlar, 14 gün hiç açılmazsa şifre sorulur. Reddedilen API isteklerinin hata kaydında telefon, adres ve e-posta `***` olarak saklanır. **"Tüm cihazlardan çıkış"** tüm oturumları geçersiz kılar. Girişliyken sayfalar `no-store`.
+- Oturum 14 gün (9 günlük bayram tatili aşılsın diye); her girişte/kullanımda süre yeniden başlar, 14 gün hiç açılmazsa şifre sorulur. Reddedilen API isteklerinin hata kaydında (form ve JSON gövdelerinde) telefon, adres ve e-posta `***` olarak saklanır; kayıtlar giriş yapmış kullanıcıya Dış sistem > Reddedilen sekmesinde gösterilir. **"Tüm cihazlardan çıkış"** tüm oturumları geçersiz kılar. Girişliyken sayfalar `no-store`.
 - **Cihaz adı ve Hareketler:** Her telefon/bilgisayar ilk girişte bir ad ister (ör. "Usta telefonu"); aynı ad birden çok cihazda kullanılabilir (ayırmak için yanında kısa kod görünür). Ad, tarayıcıda imzalı bir "cihaz kartı" olarak 400 gün saklanır. **İstatistik → Hareketler** sayfası kim/hangi cihaz/hangi IP'den ne yaptığını listeler (giriş-çıkış, iş emri, müşteri/araç ekleme-düzenleme-silme, şifre ve ayar değişiklikleri). Kayıtlarda müşteri adı ve telefon **tutulmaz**; yalnızca plaka/kayıt no. 180 gün sonra otomatik silinir. Not: bu kart tarayıcıya bağlıdır, donanım kimliği değildir; ortak şifreyi bilen biri başka ad seçebilir. Her dükkânın kayıtları kendi veritabanında tutulur, dükkânlar birbirini göremez. Bu bir hesap verebilirlik kaydıdır, kimlik doğrulama değildir.
-- Başlıklar: CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`. Vitrin dışı sayfalar `noindex`.
+- Dosya izinleri: uygulama `umask 077` ile çalışır; veritabanı, log ve yedek dosyaları yalnız çalıştıran kullanıcıya açıktır. Pakette `.gitignore` bulunur (`.env`, `data/`, `venv/` dışlanır).
+- Başlıklar: CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`. Yalnızca vitrin (`/`) aramada çıkabilir; diğer tüm sayfalar `noindex`. Vitrin herkese açık sabit bir tanıtımdır: dükkân verisi, giriş formu ve dış kaynak içermez (görseller sunucudan, `static/vitrin/`).
 - QR adresi tahmin edilemez token'dır; anonim sayfada müşteri adı maskelenir, **telefon gösterilmez**.
+
+## Yazdırma ajanı (dükkân bilgisayarı)
+- Ajan sunucuya dışarı doğru HTTPS ile bağlanır; dükkân bilgisayarında port açılmaz. Düz `http` ile anahtar kabul edilmez.
+- Ajan anahtarı (`ya_<dükkân kodu>_…`) dükkâna özeldir, yalnızca yönetici üretir, sunucuda yalnızca SHA-256 özeti saklanır, API anahtarından bağımsızdır. Yalnızca o dükkânın yazdırma kuyruğunu görür/işler; müşteri verisi okuyamaz. Hatalı deneme sınırı vardır (10 deneme / 5 dk). Dükkân kapatılınca ya da anahtar yenilenince/kapatılınca çalışmaz.
+- Kuyruktaki iş yalnızca etiketin yazıcı komutunu (plaka, QR bağlantısı, dükkân adı) içerir; telefon ve müşteri adı yoktur. Kuyruk kayıtları 7 gün sonra silinir. Ajan anahtarı dükkân bilgisayarında `ajan.env` içindedir; dosya yalnızca Yönetici/SYSTEM erişimine kısıtlanır.
 
 ## Senin sorumluluğun
 - `.env`, `data/` ve yedekleri **asla** repoya koyma.

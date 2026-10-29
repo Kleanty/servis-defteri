@@ -78,7 +78,7 @@ Router'da port açmak gerekmez, HTTPS otomatik gelir.
 Uygulamayı durdur, yeni sürümün dosyalarını `C:\ServisDefteri` üzerine kopyala (**`data` klasörüne ve `.env` dosyasına dokunma**), `windows\1-KUR.bat` çalıştır (yeni paketleri kurar, `.env`'i değiştirmez), sonra `windows\YENIDEN-BASLAT.bat`.
 
 ## 12. Muhasebe / dış sistem entegrasyonu (isteğe bağlı)
-Muhasebe programı kayıt açınca Servis Defteri'ne haber verebilir: plakanın açık iş emrine yapılan işlem, durum ve notlar işlenir (yeni iş emri açılmaz, etiket basılmaz). Emin olunamayan kayıtlar üst menüdeki **🔗 Eşleşmeyen** rozetinde bekler.
+Muhasebe programı kayıt açınca Servis Defteri'ne haber verebilir: plakanın açık iş emrine yapılan işlem, durum ve notlar işlenir (yeni iş emri açılmaz, etiket basılmaz). Emin olunamayan kayıtlar üst menüdeki **🔗 Dış sistem** düğmesinde (Karar bekleyen sekmesi) bekler; reddedilen istekler aynı sayfada Reddedilen sekmesindedir.
 - Kurulum API anahtarını kendisi üretir (`.env` içinde `ENTEGRASYON_API_ANAHTARI`, ayrıca `data\ENTEGRASYON-ANAHTARI.txt`). Anahtar boşsa API kapalıdır.
 - Adres: `https://alan-adin/api/v1/is-emirleri` (yalnızca HTTPS; alan adı bağlandıktan sonra, bkz. adım 8).
 - Entegrasyon firmasına verilecek belgeler: `docs\Servis-Defteri-Entegrasyon-API.pdf`, `docs\openapi.yaml`, `docs\ornekler\`. Yönetici rehberi (firmaya verilmez): `docs\YONETIM-REHBERI.pdf`.
@@ -101,7 +101,9 @@ Muhasebe programı kayıt açınca Servis Defteri'ne haber verebilir: plakanın 
 | Belirti | Çözüm |
 |---|---|
 | `1-KUR.bat`: "Python bulunamadı" | Python'u kurarken "Add python.exe to PATH" işaretli olmalı; işaretlemediysen Python'u kaldırıp yeniden kur. |
-| Pakette hata / internet | İnternet var mı kontrol et, `1-KUR.bat`'ı tekrar çalıştır. |
+| Kurulum hata verdi | Ekranda kırmızı hata, **hatanın olduğu adım** ve olası neden/çözüm yazar. Ayrıca **masaüstünde `SERVIS-DEFTERI-KURULUM-HATASI.txt`** oluşur (ve Not Defteri'nde açılır; kopyası `C:\ServisDefteri\data\kurulum-hata.txt`). İçinde adım, betikte satır, bilgisayar bilgisi (Windows, Python, disk, internet) ve kurulum kaydinin sonu var. Çözemezsen bu dosyayı olduğu gibi gönder. `1-KUR.bat` için aynı rapor `data\kurulum-hata.txt`, ayrıntı `data\1-kur.log`. |
+| Pakette hata / internet | İnternet var mı kontrol et, kurulumu tekrar çalıştır. Rapordaki "Internet" satırları pypi.org erişimini gösterir; sirket/okul agi, proxy ya da antivirus engelliyor olabilir (telefonun sicak noktasiyla dene). |
+| Kurulum penceresi hemen kapanıyor / "zip icinden" uyarisi | Zip'e sag tik → **Tümünü ayıkla**, çıkan klasörden çalıştır (zip'in içinden çalışmaz). |
 | Etiket çıkmıyor, "yazıcı bulunamadı" | `YAZICILARI-LISTELE.bat` → adı `.env` içine `ETIKET_YAZICI_ADI` olarak yaz. |
 | "Yazıcı çevrimdışı görünüyor" | USB kablosu, yazıcının açık olması. Windows'ta yazıcıya sağ tık → "Yazdırma kuyruğunu aç" → Yazıcı menüsünde **"Yazıcıyı çevrimdışı kullan"** işaretliyse kaldır. |
 | İş kuyrukta takılı kalıyor | "Print Spooler" hizmeti çalışmalı (Hizmetler). Kuyruktaki işleri iptal et, yazıcıyı kapat-aç. |

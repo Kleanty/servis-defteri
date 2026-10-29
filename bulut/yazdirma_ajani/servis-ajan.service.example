@@ -1,0 +1,19 @@
+# Linux / Raspberry dukkan bilgisayari icin. /opt/servis-ajan altina kuruldugunu varsayar:
+#   sudo cp -r yazdirma_ajani /opt/servis-ajan && cd /opt/servis-ajan
+#   python3 -m venv venv && venv/bin/pip install -r requirements.txt && cp ajan.env.example ajan.env && nano ajan.env
+#   sudo cp servis-ajan.service.example /etc/systemd/system/servis-ajan.service && sudo systemctl enable --now servis-ajan
+# Yazici USB ise kullanicinin yazici aygitina izni olmali (lp grubu / udev), bkz. docs/YAZICI.md.
+[Unit]
+Description=Servis Defteri yazdirma ajani
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/opt/servis-ajan
+ExecStart=/opt/servis-ajan/venv/bin/python /opt/servis-ajan/yazdirma_ajani.py
+Restart=always
+RestartSec=10
+User=root
+
+[Install]
+WantedBy=multi-user.target

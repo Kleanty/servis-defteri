@@ -6,9 +6,8 @@
 SUBSYSTEM=="usbmisc", KERNEL=="lp*", SYMLINK+="etiket", GROUP="lp", MODE="0660"
 
 # 2) lp0 oluşmuyorsa uygulama yazıcıyı pyusb ile doğrudan bulur; bunun için cihaza yazma izni:
-#    yazıcı sınıfı (07) veya üreticiye özel (ff) arayüzü olan USB cihazlar
+#    yalnız yazıcı sınıfı (07) arayüzü olan USB cihazlar. Üreticiye özel (ff) sınıfla çalışan yazıcılar için aşağıdaki gibi kendi VID/PID satırını ekle (lsusb).
 SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{ID_USB_INTERFACES}=="*:07????:*", GROUP="lp", MODE="0660"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{ID_USB_INTERFACES}=="*:ff????:*", GROUP="lp", MODE="0660"
 
 # 3) Xprinter XP-470B (test edilen yazıcı) - sınıfı ne bildirirse bildirsin izin ver
 SUBSYSTEM=="usb", ATTR{idVendor}=="2d37", ATTR{idProduct}=="82c5", GROUP="lp", MODE="0660"

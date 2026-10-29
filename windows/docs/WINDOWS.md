@@ -80,7 +80,7 @@ Router'da port açmak gerekmez, HTTPS otomatik gelir.
 Uygulamayı durdur, yeni sürümün dosyalarını `C:\ServisDefteri` üzerine kopyala (**`data` klasörüne ve `.env` dosyasına dokunma**), `windows\1-KUR.bat` çalıştır (yeni paketleri kurar, `.env`'i değiştirmez), sonra `windows\YENIDEN-BASLAT.bat`.
 
 ## 12. Muhasebe / dış sistem entegrasyonu (isteğe bağlı)
-Muhasebe programı kayıt açınca Servis Defteri'ne haber verebilir: plakanın açık iş emrine yapılan işlem, durum ve notlar işlenir (yeni iş emri açılmaz, etiket basılmaz). Emin olunamayan kayıtlar üst menüdeki **🔗 Eşleşmeyen** rozetinde bekler.
+Muhasebe programı kayıt açınca Servis Defteri'ne haber verebilir: plakanın açık iş emrine yapılan işlem, durum ve notlar işlenir (yeni iş emri açılmaz, etiket basılmaz). Emin olunamayan kayıtlar üst menüdeki **🔗 Dış sistem** düğmesinde (Karar bekleyen sekmesi) bekler; reddedilen istekler aynı sayfada Reddedilen sekmesindedir.
 - Kurulum API anahtarını kendisi üretir (`.env` içinde `ENTEGRASYON_API_ANAHTARI`, ayrıca `data\ENTEGRASYON-ANAHTARI.txt`). Anahtar boşsa API kapalıdır.
 - Adres: `https://alan-adin/api/v1/is-emirleri` (yalnızca HTTPS; alan adı bağlandıktan sonra, bkz. adım 8).
 - Entegrasyon firmasına verilecek belgeler: `docs\Servis-Defteri-Entegrasyon-API.pdf`, `docs\openapi.yaml`, `docs\ornekler\`. Yönetici rehberi (firmaya verilmez): `docs\YONETIM-REHBERI.pdf`.

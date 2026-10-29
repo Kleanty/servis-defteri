@@ -12,7 +12,7 @@ Tam belge: `Servis-Defteri-Entegrasyon-API.pdf` (örnek kodlarla) · makine-okun
 - `yapilan_islem`: karşı sistem son karar → mevcut "Yapılan işlem"in yerine yazılır, eski metin nota "Önceki işlem: …" olarak saklanır. "Ne yapılacak?" (geliş nedeni) alanına dokunulmaz.
 - Müşteri/araç alanları yalnızca boşsa tamamlanır. `durum` gelirse uygulanır (Tamamlandı → gidiş zamanı yazılır).
 - `kayit_no` tekrar koruması **dükkân başınadır**: iki dükkân aynı numarayı bağımsız kullanabilir.
-- Eşleşme güvenli değilse (plaka kayıtsız / açık iş emri yok / birden fazla açık / km uyuşmuyor / iş emri çok eski) → `202`, kayıt o dükkânın üst menüsündeki **🔗 Eşleşmeyen** listesine düşer (başka dükkân görmez).
+- Eşleşme güvenli değilse (plaka kayıtsız / açık iş emri yok / birden fazla açık / km uyuşmuyor / iş emri çok eski) → `202`, kayıt o dükkânın üst menüsündeki **🔗 Dış sistem** düğmesindeki **Karar bekleyen** sekmesine düşer (başka dükkân görmez). Reddedilen (kabul edilmeyen) istekler aynı sayfada **Reddedilen** sekmesinde görünür; telefon, adres ve e-posta gizlenir.
 
 ## .env ayarları (tüm dükkânlar için ortak)
 `ENTEGRASYON_KM_TOLERANS=50` · `ENTEGRASYON_GUN_ARALIGI=5` · `ENTEGRASYON_KAYIT_NO_ZORUNLU=0` · `ENTEGRASYON_HTTPS_ZORUNLU=1` · `ENTEGRASYON_YENI_KAYIT=0` (anahtar `.env`'de değil, yönetici panelindedir)

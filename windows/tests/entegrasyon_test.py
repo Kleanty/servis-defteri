@@ -66,7 +66,7 @@ k('kayıtsız plaka: 202, araç oluşmadı',r5.status_code==202 and db().execute
 # --- eşleşmeyenler sayfası ve eylemler ---
 s=a.get('/eslesmeyen-kayitlar',environ_overrides=R); t=s.get_data(as_text=True)
 k('eşleşmeyenler sayfası açılır, kayıtlar listelenir',s.status_code==200 and 'Kayıt no: E4' in t and 'Kayıt no: E3' in t)
-k('menüde rozet görünür',b'E\xc5\x9fle\xc5\x9fmeyen' in a.get('/panel',environ_overrides=R).data)
+k('menüde rozet görünür','Dış sistem <span class="badge text-bg-danger">' in a.get('/panel',environ_overrides=R).get_data(as_text=True))
 k('girişsiz eşleşmeyenler sayfası yönlendirir',api.get('/eslesmeyen-kayitlar',environ_overrides=R).status_code in (302,401))
 ac=db().execute("select id from is_emirleri where durum!='Tamamlandı' order by id").fetchall()
 k('bağla: seçilen iş emrine işler',P('/eslesmeyen-kayitlar/E3/bagla',is_emri_id=ac[0][0]).status_code==302 and db().execute("select durum,is_emri_id from entegrasyon_kayit where kayit_no='E3'").fetchone()==('eslesti',ac[0][0]))
@@ -122,4 +122,19 @@ k('eski hatalı-anahtar kayıtları temizlenir (sözlük büyümez)',len(A._ent_
 # --- belgeler ---
 for f in ('docs/ENTEGRASYON-API.md','docs/openapi.yaml','docs/ornekler/ornek.py','docs/ornekler/ornek.sh','docs/ornekler/ornek.js','docs/ornekler/ornek.cs','docs/ornekler/ornek.ps1'):
     k('belge var: '+f,os.path.isfile(f))
+# --- birleşik "Dış sistem" sayfası: Karar bekleyen + Reddedilen ---
+r=api.post('/api/v1/is-emirleri',data={'plaka':'34ABC123','kayit_no':'FORM1','eposta':'ali@ornek.com','tel':'0555 111 22 33','km':'99999999999','musteri_ad':'Ali Veli','yapilan_islem':'Lastik'},headers=H,environ_overrides={'REMOTE_ADDR':'10.1.2.3'})
+k('form isteği reddedildi (422)',r.status_code==422)
+red=a.get('/eslesmeyen-kayitlar?sekme=red',environ_overrides=R).get_data(as_text=True)
+k('Reddedilen sekmesi: plaka, ad, işlem ve hata görünür','ABC' in red and 'Ali Veli' in red and 'Lastik' in red and 'km çok büyük' in red)
+k('Reddedilen sekmesi: telefon/e-posta gizli','ali@ornek.com' not in red and '0555' not in red and 'E-posta: ***' in red and 'Telefon: ***' in red)
+k('iki sekme de sayfada',('Karar bekleyen' in red) and ('Reddedilen' in red))
+k('Karar bekleyen sekmesi ayrı açılır',('Bu iş emrine bağla' in a.get('/eslesmeyen-kayitlar?sekme=bekleyen',environ_overrides=R).get_data(as_text=True)) or ('Bekleyen kayıt yok' in a.get('/eslesmeyen-kayitlar?sekme=bekleyen',environ_overrides=R).get_data(as_text=True)))
+k('üst çubuk: tek "Dış sistem" düğmesi, eski "Eşleşmeyen" yok',a.get('/panel',environ_overrides=R).get_data(as_text=True).count('Dış sistemden gelen kayıtlar')==1 and 'Eşleşmeyen <' not in a.get('/panel',environ_overrides=R).get_data(as_text=True))
+with A.app.test_request_context():
+    k('reddedilen 7 gün içindeyse sayılır',A.ent_red_say()>=1)
+db_=db(); db_.execute("UPDATE entegrasyon_hata SET zaman='2020-01-01 00:00:00'"); db_.commit(); db_.close()
+with A.app.test_request_context():
+    k('7 günden eski reddedilenler sayılmaz',A.ent_red_say()==0)
+
 print(f'{ok} geçti, {fail} başarısız'); sys.exit(1 if fail else 0)

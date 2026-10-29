@@ -13,7 +13,7 @@
 .et-dev:disabled{opacity:.6}
 .et-btn-not{font-size:.82rem;color:#64748b;margin:8px 4px 0}
 .et-dev small{display:block;font-weight:600;font-size:.8rem;opacity:.8;margin-top:3px}
-.et-ad{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:14px}
+.et-ad{display:flex;justify-content:center;align-items:center;gap:18px;margin:14px 0 22px}
 .et-ad button{width:52px;height:48px;border:2px solid #cbd5e1;border-radius:12px;background:#fff;font-size:1.5rem;font-weight:700}
 .et-ad b{font-size:1.7rem;min-width:30px;text-align:center}
 .et-sonuc{display:none;margin-top:12px;border-radius:14px;padding:13px 15px;font-weight:600}
@@ -32,6 +32,8 @@
 <div class="et-card" style="padding:12px"><img id="onizleme" class="et-prev" src="{{url_for('arac_etiket_onizleme',arac_id=a.id)}}" alt="Etiket önizleme"></div>
 
 <div class="et-ad"><span class="text-muted">Adet</span><button type="button" id="eksi" aria-label="Azalt">−</button><b id="adet">1</b><button type="button" id="arti" aria-label="Artır">+</button></div>
+{% if g.dukkan.ajan_hash %}<button id="aj" type="button" class="et-dev" style="background:#16a34a;color:#fff;margin-bottom:10px">🖨️ Dükkân bilgisayarından bas<small>58 × 40 mm · bilgisayardaki USB yazıcıdan çıkar</small></button>
+<div id="ajNot" class="et-btn-not" style="margin:-2px 4px 12px"></div>{% endif %}
 <button id="bt" type="button" class="et-dev">📲 Etiketi Bluetooth ile çıkart<small>58 × 40 mm · telefon yazıcıya bağlanır · Android Chrome</small></button>
 <div id="btNot" class="et-btn-not d-none"></div>
 <div id="sonuc" class="et-sonuc" role="status"></div>
@@ -117,6 +119,28 @@
       else {btAygit=null;btKar=null; sonuc(false,'Bluetooth ile gönderilemedi. Yazıcıyı kapatıp aç, telefonun Bluetooth’unu kontrol et ve tekrar dene.')}
     }).then(function(){btGonderiyor=false;b.disabled=false;b.innerHTML=eski});
   };
+  // ---- Dükkân bilgisayarından basım: iş sunucuda kuyruğa girer, bilgisayardaki ajan alıp yazıcıya gönderir
+  var aj=$('aj');
+  if(aj){
+    var ajBusy=false;
+    function ajDurum(id,deneme){
+      return fetch('/yazdirma/'+id+'/durum',{credentials:'same-origin',headers:{'Accept':'application/json'}}).then(function(r){return r.json()}).then(function(d){
+        if(d.durum==='basildi') return sonuc(true,'Etiket yazıcıya gönderildi.');
+        if(d.durum==='hata') return sonuc(false,d.mesaj||'Basılamadı.');
+        if(deneme>=40) return sonuc(false,'Dükkân bilgisayarından yanıt gelmedi. Bilgisayar açık mı, ajan çalışıyor mu? Etiket kuyrukta bekliyor; bilgisayar açılınca bir kez basılır (tekrar dokunmana gerek yok).');
+        if(d.durum==='bekliyor'&&!d.bagli&&deneme>=2) $('ajNot').textContent='Dükkân bilgisayarı şu an bağlı görünmüyor. Açılınca etiket kendiliğinden çıkar.';
+        return bekle(1500).then(function(){return ajDurum(id,deneme+1)});
+      });
+    }
+    aj.onclick=function(){
+      if(ajBusy) return; ajBusy=true; var eski=aj.innerHTML; aj.disabled=true; aj.innerHTML='⏳ Gönderiliyor…'; $('ajNot').textContent='';
+      post('{{url_for("arac_yazdir",arac_id=a.id)}}',{adet:adet}).then(function(d){
+        if(!d.ok) return sonuc(false,d.mesaj||'Gönderilemedi.');
+        if(!d.bagli) $('ajNot').textContent='Dükkân bilgisayarı şu an bağlı görünmüyor; açıksa birkaç saniye bekle.';
+        return ajDurum(d.is_id,0);
+      }).catch(function(){sonuc(false,'Bağlantı hatası. İnterneti kontrol edip tekrar dene.')}).then(function(){ajBusy=false;aj.disabled=false;aj.innerHTML=eski});
+    };
+  }
   btNot(btUygun());
 })();
 </script>

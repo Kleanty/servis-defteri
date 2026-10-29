@@ -49,4 +49,7 @@ venv/bin/python -c "import secrets;print(secrets.token_urlsafe(32))"   # çıkan
 sudo systemctl restart servis-defteri
 ```
 Adres: `https://alan-adin/api/v1/is-emirleri` (yalnızca HTTPS; ters vekil/tünel `X-Forwarded-Proto` göndermelidir, Cloudflare Tunnel gönderir). Belgeler: `docs/Servis-Defteri-Entegrasyon-API.pdf`, `docs/openapi.yaml`, `docs/ornekler/`. Deneme: `venv/bin/python scripts/entegrasyon_deneme.py` (demo kayıt ekler; `--temizle` siler). Başka bir bilgisayardan tek kayıt göndermek için `disaridan_gonder/disaridan_gonder.py` (yalnızca Python gerekir).
-Emin olunamayan kayıtlar üst menüdeki **🔗 Eşleşmeyen** rozetinde bekler.
+Emin olunamayan kayıtlar üst menüdeki **🔗 Dış sistem** düğmesinde (Karar bekleyen sekmesi) bekler; reddedilen istekler aynı sayfada Reddedilen sekmesindedir.
+
+## Kurulum hata verirse
+`scripts/kurulum.sh` her adımı `data/kurulum.log` dosyasına, pip çıktısını `data/kurulum-pip.log` dosyasına yazar. Bir adım başarısız olursa ekranda **hangi adımda** takıldığı ve olası neden/çözüm yazılır; ayrıca **`data/kurulum-hata.txt`** raporu oluşur: adım, betikte satır/komut, sistem (dağıtım, Python, venv, disk, bellek, proxy), pypi.org erişimi ve kaydın sonu. Çözemezsen bu dosyayı olduğu gibi gönder: `cat data/kurulum-hata.txt`. Başarılı bir kurulumda eski rapor silinir.

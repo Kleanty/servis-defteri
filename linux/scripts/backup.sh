@@ -4,6 +4,7 @@
 # en eski yedekler tek tek silinir (toplam %90'ın altına inene dek); en yeni 30 günlük yedekler asla silinmez.
 # İsteğe bağlı kopyalar: (1) /mnt/yedek_usb bağlıysa oraya, (2) RCLONE_REMOTE tanımlıysa buluta.
 set -euo pipefail
+umask 077     # yedekler yalnız çalıştıran kullanıcıya açık
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DB_FILE="$APP_DIR/data/servis.db"
 BACKUP_DIR="$APP_DIR/data/yedekler"

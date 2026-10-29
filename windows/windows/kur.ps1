@@ -8,7 +8,15 @@ try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 $env:PYTHONUTF8 = '1'
 $Hedef  = 'C:\ServisDefteri'
 $Kaynak = Split-Path -Parent $PSScriptRoot
-function Adim($m) { Write-Host ''; Write-Host ('>> ' + $m) -ForegroundColor Cyan }
+$ProgressPreference = 'SilentlyContinue'   # PS 5.1'de Invoke-WebRequest ilerleme cubugu indirmeyi cok yavaslatir
+$script:SonAdim = 'Baslangic'
+$script:SonCikti = @()
+# Hata raporu yardimcisi (kurulum hatasinda kurulum-hata.txt uretir). Dosya yoksa/bozuksa asagidaki yedek tanimlar gecerli kalir, kurulum yine calisir.
+$yardimci = Join-Path $PSScriptRoot 'hata-raporu.ps1'
+function Native-Calistir([string]$Exe, [string[]]$Arg) { $eski = $ErrorActionPreference; $ErrorActionPreference = 'Continue'; try { $c = & $Exe @Arg 2>&1 | ForEach-Object { "$_" }; $k = $LASTEXITCODE } finally { $ErrorActionPreference = $eski }; $script:SonCikti = @($c); return $k }
+function Hata-Raporu { param($Hata, [string]$Adim, [string]$LogYol, [string]$RaporKlasor, [string]$Baslik, [string]$Kaynak) }
+if (Test-Path $yardimci) { try { . $yardimci } catch { Write-Host 'Uyari: hata-raporu.ps1 yuklenemedi (kurulum yine de calisir).' -ForegroundColor Yellow } }
+function Adim($m) { $script:SonAdim = $m; Write-Host ''; Write-Host ('>> ' + $m) -ForegroundColor Cyan }
 function Tamam($m) { Write-Host ('   OK  ' + $m) -ForegroundColor Green }
 function SifreDuz($g) { $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($g); try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) } }
 function Uyari($m) { Write-Host ('   !!  ' + $m) -ForegroundColor Yellow }
@@ -84,11 +92,21 @@ try {
   Set-Location $Hedef
   $vpy = Join-Path $Hedef 'venv\Scripts\python.exe'
   if (-not (Test-Path $vpy)) { & $py -m venv venv; if ($LASTEXITCODE -ne 0) { throw 'Sanal ortam olusturulamadi.' } }
-  & $vpy -m pip install --quiet --upgrade pip
-  & $vpy -m pip install --quiet -r requirements.txt
-  if ($LASTEXITCODE -ne 0) { Uyari 'Ilk deneme basarisiz, tekrar deneniyor...'; & $vpy -m pip install -r requirements.txt; if ($LASTEXITCODE -ne 0) { throw 'Paketler kurulamadi. Internet baglantisini kontrol edip SERVIS-DEFTERI-KUR.bat dosyasini tekrar calistir.' } }
-  & $vpy -c "import flask, waitress, qrcode, PIL; print('tamam')"
-  if ($LASTEXITCODE -ne 0) { throw 'Paket dogrulamasi basarisiz (flask/waitress/qrcode/PIL yuklenemedi).' }
+  $kod = Native-Calistir $vpy @('-m','pip','install','--disable-pip-version-check','--quiet','--upgrade','pip')
+  if ($kod -ne 0) { Uyari 'pip guncellenemedi (onemli degil, eski surumle devam ediliyor).' }
+  $kod = Native-Calistir $vpy @('-m','pip','install','--disable-pip-version-check','--quiet','-r','requirements.txt')
+  if ($kod -ne 0) {
+    Uyari ('Ilk deneme basarisiz (pip cikis kodu ' + $kod + '), tekrar deneniyor...')
+    $script:SonCikti | Select-Object -Last 15 | ForEach-Object { Write-Host ('      ' + $_) -ForegroundColor DarkYellow }
+    Start-Sleep -Seconds 3
+    $kod = Native-Calistir $vpy @('-m','pip','install','--disable-pip-version-check','-r','requirements.txt')
+    $script:SonCikti | ForEach-Object { Write-Host ('      ' + $_) }
+    if ($kod -ne 0) { throw ('Paketler kurulamadi (pip cikis kodu ' + $kod + '). Internet baglantisini kontrol edip SERVIS-DEFTERI-KUR.bat dosyasini tekrar calistir.') }
+  }
+  $kod = Native-Calistir $vpy @('-c','import flask, waitress, qrcode, PIL; print(1)')
+  if ($kod -ne 0) { throw 'Paket dogrulamasi basarisiz (flask/waitress/qrcode/PIL yuklenemedi).' }
+  $kod = Native-Calistir $vpy @('-c','import win32print; print(1)')
+  if ($kod -ne 0) { Uyari 'pywin32 (yazici modulu) yuklenemedi: etiket yazdirma calismayabilir (kurulum devam ediyor). Microsoft Visual C++ Redistributable (x64) kurulu olmayabilir.' }
   Tamam 'Paketler kuruldu ve dogrulandi.'
 
   # ---- Yedek var mi? (yalnizca veritabani YOKSA: format/sifirdan kurulumda eski kayitlari geri getirmeyi sorar; guncellemede dokunmaz)
@@ -202,6 +220,7 @@ try {
   if ($yedekYuklendi) { Write-Host ' Eski yedek yuklendi: musteri ve is emri kayitlarin geri geldi (sifre yedekle gelmez, yukarida belirledigin sifreyi kullan).' -ForegroundColor Green }
   if ($apiYeni) { Write-Host ' API anahtari olusturuldu: C:\ServisDefteri\data\ENTEGRASYON-ANAHTARI.txt (entegrasyon kullanilmayacaksa onemli degil; anahtari yalnizca guvenli bir kanaldan ver).' -ForegroundColor Yellow }
   Write-Host ' Domain baglamak icin (alanadiniz.com): C:\ServisDefteri\DOMAIN-BAGLAMA.txt dosyasini ac.'
+  try { Stop-Transcript | Out-Null } catch {}      # asagida gosterilen ilk sifre kurulum kaydina (log) yazilmasin
   $sf = Join-Path $Hedef 'data\ILK_SIFRE.txt'
   if ((Test-Path $sf) -and -not $sifreBelirlendi) {
     Write-Host ''
@@ -218,9 +237,12 @@ try {
   exit 0
 }
 catch {
+  $hataKaydi = $_
   Write-Host ''
-  Write-Host ('HATA: ' + $_.Exception.Message) -ForegroundColor Red
-  Write-Host 'Ayrintilar: C:\ServisDefteri\data\kurulum.log' -ForegroundColor Red
+  Write-Host ('HATA: ' + $hataKaydi.Exception.Message) -ForegroundColor Red
+  Write-Host ('Hatanin oldugu adim: ' + $script:SonAdim) -ForegroundColor Red
   try { Stop-Transcript | Out-Null } catch {}
+  $rk = Join-Path $Hedef 'data'
+  $null = Hata-Raporu -Hata $hataKaydi -Adim $script:SonAdim -LogYol (Join-Path $Hedef 'data\kurulum.log') -RaporKlasor $rk -Baslik 'Servis Defteri (Windows) kurulum hatasi' -Kaynak $Kaynak
   exit 1
 }

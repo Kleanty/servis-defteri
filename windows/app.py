@@ -6,6 +6,7 @@ from urllib.parse import quote
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g, abort, Response, jsonify, has_request_context
 from itsdangerous import URLSafeSerializer, BadSignature
 import base64
+os.umask(0o077)      # veritabanı, log ve yedek dosyaları yalnız çalıştıran kullanıcıya açık (0600/0700)
 import qrcode
 import etiket_yazici as EY
 
@@ -859,7 +860,7 @@ def _hareket_kuyruk(mesaj):
     try:
         if request.path.startswith('/api/v1/'): cid,et=None,'Dış sistem (API)'
         else:
-            c=_cihaz_oku() if (session.get('giris_yapildi') and giris_var()) else None
+            c=_cihaz_oku()      # imzalı cihaz kartı yeterli: giriş anında da (oturum henüz açılmadan) cihaz adı yazılır
             cid,et=(c['id'],_cihaz_etiket(c)) if c else (None,'—')
         g.setdefault('_hareket',[]).append((now(),cid,et,str(client_ip())[:45],str(mesaj)[:300]))
     except Exception: app.logger.exception('Hareket sıraya alınamadı')
@@ -1014,7 +1015,7 @@ def is_emri_hizli():
 # Akış: usta Servis Defteri'nde plaka+km ile iş emrini açar; karşı sistem (ör. muhasebe programı) kayıt açınca POST /api/v1/is-emirleri çağırır.
 # API YENİ İŞ EMRİ AÇMAZ: o plakanın TEK açık (Tamamlandı olmayan) iş emrini bulup kaydı ona işler. Etiket basılmaz.
 # Tek güvenilir eşleşme yoksa (plaka kayıtsız / açık iş emri yok / birden fazla açık / km tutmuyor / iş emri çok eski) kayıt
-# "Eşleşmeyen kayıtlar" listesine düşer (kalıcı olarak saklanır); kimse rastgele seçilmez.
+# "Dış sistem" sayfasındaki Karar bekleyen sekmesine düşer (kalıcı olarak saklanır); kimse rastgele seçilmez.
 # İŞLEM: karşı sistem (muhasebe) son karardır -> gelen "yapilan_islem" mevcut "Yapılan işlem" alanının YERİNE yazılır; eski metin nota "Önceki işlem: ..." diye saklanır.
 # Ustanın "Ne yapılacak?" (gelis_nedeni) alanına dokunulmaz.
 # Kimlik: API anahtarı (.env: ENTEGRASYON_API_ANAHTARI), "Authorization: Bearer <anahtar>" veya "X-API-Key". Anahtar yoksa uç nokta KAPALIDIR (404).
@@ -1037,10 +1038,17 @@ def _ent_maskele(govde):
             return o
         return json.dumps(m(json.loads(govde)),ensure_ascii=False)
     except ValueError:
-        return re.sub(r'\d[\d\s().+-]{6,}\d','***',govde)      # JSON değilse 7+ haneli rakam dizilerini gizle
+        if '=' in govde and ' ' not in govde.strip():                                          # form gövdesi (a=b&c=d): gizli alanların değerini '***' yap
+            try:
+                from urllib.parse import parse_qsl
+                q=parse_qsl(govde,keep_blank_values=True)
+                if q: return '&'.join(quote(str(k),safe='')+'='+('***' if str(k).strip().lower() in _ENT_GIZLI_ALAN and v!='' else quote(v,safe='')) for k,v in q)
+            except ValueError: pass
+        govde=re.sub(r'[^\s@&=<>"\']+@[^\s@&=<>"\']+','***',govde)   # ayrıştırılamayan gövdede e-posta biçimlilerini gizle
+        return re.sub(r'\d[\d\s().+-]{6,}\d','***',govde)      # 7+ haneli rakam dizilerini gizle
 def _ent_hata_kaydet(kayit_no,hata):
     try:
-        db=get_db(); db.execute('INSERT INTO entegrasyon_hata(zaman,kayit_no,hata,govde) VALUES(?,?,?,?)',(now(),str(kayit_no or '')[:64],hata[:300],_ent_maskele(request.get_data(as_text=True))[:2000])); db.commit()
+        db=get_db(); db.execute('INSERT INTO entegrasyon_hata(zaman,kayit_no,hata,govde) VALUES(?,?,?,?)',(now(),str(kayit_no or '')[:64],hata[:300],_ent_maskele(request.get_data(as_text=True) or (json.dumps(request.form.to_dict(),ensure_ascii=False) if request.form else ''))[:2000])); db.commit()
         db.execute('DELETE FROM entegrasyon_hata WHERE id NOT IN (SELECT id FROM entegrasyon_hata ORDER BY id DESC LIMIT 500)'); db.commit()
     except sqlite3.Error: app.logger.exception('entegrasyon_hata yazılamadı')
     log_olay(f'ENTEGRASYON reddedildi ({kayit_no}): {hata}')
@@ -1084,7 +1092,7 @@ def _ent_isle(db,ie,v,t):
         if e.lower() not in notu.lower(): notu=(notu+' | '+e if notu else e)
     durum=r['durum']; gidis=r['gidis_at']
     if v.get('durum') in DURUM_SECENEKLERI:
-        durum=v['durum']; gidis=(gidis or v.get('gidis') or t) if durum=='Tamamlandı' else None
+        durum=v['durum']; gidis=(v.get('gidis') or gidis or t) if durum=='Tamamlandı' else None
     db.execute("UPDATE is_emirleri SET yapilan_islem=?,notlar=?,giris_km=COALESCE(giris_km,?),durum=?,gidis_at=?,guncellendi_at=? WHERE id=?",(yap[:1000],notu[:1000],v.get('km'),durum,gidis,t,ie))
     if v.get('marka') and not (r['marka'] or '').strip(): db.execute('UPDATE araclar SET marka=?,guncellendi_at=? WHERE id=?',(v['marka'],t,r['arac_id']))
     if v.get('model') and not (r['model'] or '').strip(): db.execute('UPDATE araclar SET model=?,guncellendi_at=? WHERE id=?',(v['model'],t,r['arac_id']))
@@ -1185,13 +1193,36 @@ def ent_is_emri():
     except sqlite3.Error:
         db.rollback(); app.logger.exception('Entegrasyon DB hatası'); return red('Veritabanı hatası, tekrar dene.',500,'SERVER_ERROR')
 
-# --- Eşleşmeyen kayıtlar: usta/muhasebe görüp karar verir ---
+# --- Dış sistem sayfası (Karar bekleyen + Reddedilen): usta/muhasebe görüp karar verir ---
 def eslesmeyen_say():
     try: return get_db().execute("SELECT COUNT(*) FROM entegrasyon_kayit WHERE durum='beklemede'").fetchone()[0] if ENT_API_ANAHTARI else 0
     except sqlite3.Error: return 0
+def ent_red_say():
+    """Son 7 günde dış sistemden reddedilen istek sayısı (üst çubuktaki 'Dış sistem' düğmesinin görünmesi için)."""
+    if not ENT_API_ANAHTARI: return 0
+    try: return get_db().execute("SELECT COUNT(*) FROM entegrasyon_hata WHERE zaman>=?",((datetime.now()-timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S'),)).fetchone()[0]
+    except sqlite3.Error: return 0
+def _ent_red_ozet(govde):
+    """entegrasyon_hata.govde (telefon/adres/e-posta zaten '***' yapılmış JSON ya da form gövdesi) -> ekranda gösterilecek alanlar."""
+    d={}
+    try:
+        j=json.loads(govde or '')
+        if isinstance(j,dict): d=j
+    except ValueError:
+        try:
+            from urllib.parse import parse_qsl
+            s=(govde or '').strip()
+            d=dict(parse_qsl(s,keep_blank_values=True)) if s and ' ' not in s else {}
+        except ValueError: d={}
+    def al(k):
+        x=d.get(k)
+        if isinstance(x,list): x=', '.join(str(i) for i in x)
+        return re.sub(r'\s+',' ',str(x if x is not None else '')).strip()[:300]
+    gizli=[ad for ad,anahtarlar in (('Telefon',('telefon','tel','phone')),('E-posta',('eposta','e-posta','email')),('Adres',('adres','address'))) if any(str(d.get(k) or '').strip() for k in anahtarlar)]
+    return {'plaka':al('plaka'),'km':al('km'),'ad':al('musteri_ad'),'islem':al('yapilan_islem'),'not':al('not'),'durum':al('durum'),'gizli':gizli}
 @app.context_processor
 def ent_bagla():
-    return {'eslesmeyen':eslesmeyen_say() if giris_var() else 0}
+    return {'eslesmeyen':eslesmeyen_say() if giris_var() else 0,'ent_red7':ent_red_say() if giris_var() else 0}
 @app.route('/eslesmeyen-kayitlar')
 @login_required
 def eslesmeyen_kayitlar():
@@ -1200,7 +1231,12 @@ def eslesmeyen_kayitlar():
         v=json.loads(r['veri'] or '{}'); a=arac_bul(db,v.get('plaka','')) if v.get('plaka') else None
         adaylar=[dict(x) for x in _ent_acik_isemirleri(db,a['id'])] if a else []
         liste.append({'kayit_no':r['kayit_no'],'neden':r['neden'],'zaman':r['olusturuldu_at'],'v':v,'adaylar':adaylar,'plaka_goster':plaka_goster(v.get('plaka','')),'arac_var':bool(a)})
-    return render_template('eslesmeyen_kayitlar.html',liste=liste)
+    red=[]
+    for r in db.execute("SELECT zaman,kayit_no,hata,govde FROM entegrasyon_hata ORDER BY id DESC LIMIT 100").fetchall():
+        o=_ent_red_ozet(r['govde']); o.update(zaman=r['zaman'],kayit_no=r['kayit_no'],hata=r['hata'],plaka_goster=plaka_goster(o['plaka']) if o['plaka'] else ''); red.append(o)
+    sekme=request.args.get('sekme')
+    if sekme not in ('bekleyen','red'): sekme='red' if (red and not liste) else 'bekleyen'      # bekleyen yoksa ve reddedilen varsa doğrudan reddedilenler açılır
+    return render_template('eslesmeyen_kayitlar.html',liste=liste,red=red,sekme=sekme)
 @app.route('/eslesmeyen-kayitlar/<path:kayit_no>/<eylem>',methods=['POST'])
 @login_required
 def eslesmeyen_islem(kayit_no,eylem):
@@ -1221,7 +1257,7 @@ def eslesmeyen_islem(kayit_no,eylem):
         else: abort(404)
         db.commit()
     except sqlite3.Error:
-        db.rollback(); app.logger.exception('Eşleşmeyen kayıt işlem hatası'); flash('Kaydedilemedi, tekrar dene.','danger')
+        db.rollback(); app.logger.exception('Dış sistem kaydı işlem hatası'); flash('Kaydedilemedi, tekrar dene.','danger')
     return redirect(url_for('eslesmeyen_kayitlar'))
 
 # ===================== ÇÖP KUTUSU (silinenleri geri getir) =====================

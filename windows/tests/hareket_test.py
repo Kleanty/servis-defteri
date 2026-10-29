@@ -41,7 +41,8 @@ s=db().execute("select count(*),count(distinct kod) from cihazlar where ad='Usta
 
 # --- çıkış / yeniden giriş ad sormaz ---
 P(a,'/logout'); t=re.search(r'name="csrf_token" value="([^"]+)"',a.get('/login',environ_overrides=R).get_data(as_text=True)).group(1)
-a.post('/login',data={'csrf_token':t,'sifre':'TestSifre-12345!'},environ_overrides=R); k('çıkış-giriş sonrası ad yeniden sorulmaz',a.get('/panel',environ_overrides=R).status_code==200)
+a.post('/login',data={'csrf_token':t,'sifre':'TestSifre-12345!'},environ_overrides=R); k('adı olan cihazın giriş kaydı cihaz adıyla yazılır',(db().execute("select cihaz from hareketler where olay='Giriş başarılı' order by id desc limit 1").fetchone() or [''])[0].startswith('Usta telefonu'))
+k('çıkış-giriş sonrası ad yeniden sorulmaz',a.get('/panel',environ_overrides=R).status_code==200)
 k('bozuk/sahte cihaz kartı kabul edilmez',(lambda c:(c.set_cookie('cihaz','sahte-deger'),c.get('/panel',environ_overrides=R).status_code)[1])(yeni_istemci())==302)
 
 # --- hareketler ---

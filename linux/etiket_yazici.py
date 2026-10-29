@@ -1,6 +1,6 @@
 """USB termal etiket yazıcısına (XP-470B ve TSPL konuşan muadilleri) doğrudan, ham TSPL ile yazdırma.
 
-Tek etiket türü: 58 x 40 mm, yatay (solda büyük QR, sağda işletme adı + plaka). CUPS / sürücü / Bluetooth yok.
+Tek etiket türü: 58 x 40 mm, yatay (solda büyük QR, sağda işletme adı + plaka). CUPS / sürücü yok. (Bu modül yalnız USB yazıcıya yazar; telefondan Bluetooth ile basma tarayıcıda çalışır, bu modülü kullanmaz.)
 Yazıcı önce pyusb ile doğrudan bulunur (Linux sürücüsü ayrılır, ham TSPL gönderilir); olmazsa /dev/usb/lp* denenir.
 Flask'a bağımlı değildir.
 
@@ -81,7 +81,7 @@ def _usb_bul():
             if d.bDeviceClass == 9: continue                       # hub
             for cfg in d:
                 for intf in cfg:
-                    if intf.bInterfaceClass in (7, 255) and any(
+                    if intf.bInterfaceClass == 7 and any(
                             usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT for ep in intf):
                         return (d.idVendor, d.idProduct)
     except Exception as ex:                # noqa: BLE001

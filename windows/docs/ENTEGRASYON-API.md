@@ -8,7 +8,7 @@ Tam belge: `Servis-Defteri-Entegrasyon-API.pdf` (örnek kodlarla) · makine-okun
 - Zorunlu alan: `plaka`. İsteğe bağlı: `kayit_no`, `km`, `marka`, `model`, `musteri_ad`, `telefon`, `eposta`, `adres`, `yapilan_islem`, `durum`, `gelis_zamani`, `gidis_zamani`, `not`
 - `yapilan_islem`: karşı sistem son karar → mevcut "Yapılan işlem"in yerine yazılır, eski metin nota "Önceki işlem: …" olarak saklanır. "Ne yapılacak?" (geliş nedeni) alanına dokunulmaz.
 - Müşteri/araç alanları yalnızca boşsa tamamlanır. `durum` gelirse uygulanır (Tamamlandı → gidiş zamanı yazılır).
-- Eşleşme güvenli değilse (plaka kayıtsız / açık iş emri yok / birden fazla açık / km uyuşmuyor / iş emri çok eski) → `202`, kayıt üst menüdeki **🔗 Eşleşmeyen** listesine düşer.
+- Eşleşme güvenli değilse (plaka kayıtsız / açık iş emri yok / birden fazla açık / km uyuşmuyor / iş emri çok eski) → `202`, kayıt üst menüdeki **🔗 Dış sistem** düğmesindeki **Karar bekleyen** sekmesine düşer. Reddedilen (kabul edilmeyen) istekler aynı sayfada **Reddedilen** sekmesinde görünür; telefon, adres ve e-posta gizlenir.
 
 ## .env ayarları
 `ENTEGRASYON_API_ANAHTARI` (kurulum otomatik üretir; boşsa API kapalı) · `ENTEGRASYON_KM_TOLERANS=50` · `ENTEGRASYON_GUN_ARALIGI=5` · `ENTEGRASYON_KAYIT_NO_ZORUNLU=0` · `ENTEGRASYON_HTTPS_ZORUNLU=1` · `ENTEGRASYON_YENI_KAYIT=0`

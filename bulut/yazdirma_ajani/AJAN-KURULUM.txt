@@ -1,0 +1,41 @@
+SERVIS DEFTERI - YAZDIRMA AJANI (dükkân bilgisayarındaki USB yazıcı için)
+
+Ne işe yarar?
+  Servis Defteri internette (bulut) çalışıyorsa sunucu dükkândaki yazıcıya doğrudan ulaşamaz.
+  Bu küçük program dükkân bilgisayarında çalışır, sunucuya kendisi bağlanır ve "basılacak etiket var mı?"
+  diye sorar. Telefondan "Dükkân bilgisayarından bas" dokunulunca etiket bilgisayardaki yazıcıdan çıkar.
+  Modemden port açmak, VPN kurmak gerekmez.
+
+Ne lazım?
+  - Yazıcı bilgisayara USB ile takılı ve Windows'ta yazıcı sürücüsü kurulu (XP-470B / Xprinter gibi TSPL yazıcı).
+  - Bilgisayar internete bağlı ve açık.
+  - Yöneticiden: sunucu adresi (https://...) ve "ajan anahtarı" (ya_ ile başlar).
+
+Ekran görüntüleri (kurulum klasörünün ana dizininde):
+  08-etiket-ekrani.png            -> telefondaki etiket ekranı, yeşil "Dükkân bilgisayarından bas" düğmesi
+  16-yonetici-ajan-anahtari.png   -> yöneticinin ajan anahtarı üretmesi
+
+Kurulum (Windows)
+  1) Bu klasörü bilgisayara kopyala (USB bellekten de olur).
+  2) AJAN-KUR.bat dosyasına sağ tıkla -> "Yönetici olarak çalıştır".
+  3) Sorulanlara cevap ver: sunucu adresi, ajan anahtarı, deneme etiketi (E).
+  4) Bitti. Bilgisayar her açıldığında ajan kendiliğinden başlar. C:\ServisAjan klasörüne kurulur.
+
+Kurulum hata verirse
+  Ekranda hatanın olduğu adım ve olası çözüm yazar; masaüstünde SERVIS-DEFTERI-KURULUM-HATASI.txt oluşur
+  (kopyası C:\ServisAjan\kurulum-hata.txt). Çözemezsen bu dosyayı olduğu gibi gönder.
+
+Sorun olursa
+  AJAN-DENEME.bat: sunucu bağlantısını, yazıcıyı ve son kayıtları gösterir, deneme etiketi basar.
+  - "Anahtar kabul edilmedi": adres ya da anahtar yanlış/yenilenmiş; yöneticiden yenisini iste.
+  - "Etiket yazıcısı bulunamadı": sürücüyü kur, USB'yi tak; yazıcı adı farklıysa C:\ServisAjan\ajan.env içine
+    ETIKET_YAZICI_ADI=<yazıcı adından bir parça> yaz, AJAN-DENEME.bat ile dene.
+  - Kayıt dosyası: C:\ServisAjan\ajan.log
+
+Kaldırma
+  AJAN-KALDIR.bat (yönetici olarak). İstersen C:\ServisAjan klasörünü sonra elle silebilirsin.
+
+Notlar
+  - Bilgisayar kapalıyken istenen etiketler 30 dakika bekler; süre dolarsa basılmaz.
+  - Yazıcıdan yanıt gelmeyen iş tekrar basılmaz (çift etiket çıkmasın diye).
+  - Linux/Raspberry için: servis-ajan.service.example dosyasındaki adımlar.

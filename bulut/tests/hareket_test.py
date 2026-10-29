@@ -57,6 +57,8 @@ k('B dükkânı A\'nın hareketlerini göremez', '34 TST 111' not in get(b, '/ha
 k('İstatistikte Hareketler düğmesi', '/hareketler' in get(a, '/istatistik').get_data(as_text=True))
 k('girişsiz /hareketler giriş ister', A.app.test_client().get('/hareketler', environ_overrides=R).status_code == 302)
 
+a4 = A.app.test_client(); a4.set_cookie('cihaz', kart); post(a4, '/login', kullanici='ahmet-oto', sifre='Ahmet-Sifre-1')
+k('adı olan cihazın giriş kaydı cihaz adıyla yazılır', (dbx(ia).execute("select cihaz from hareketler where olay='Giriş başarılı' order by id desc limit 1").fetchone() or [''])[0].startswith('Usta telefonu'))
 # --- yeniden adlandırma ---
 r = post(a, f'/hareketler/cihaz/{cid[0]}', '/hareketler', ad='Ofis'); t = get(a, '/hareketler').get_data(as_text=True)
 k('yeniden adlandırma eski kayıtlara da yansır', r.status_code == 302 and f'Ofis · #{cid[1]}' in t)

@@ -76,7 +76,7 @@ k('kayit_no çakışması dükkân dışına taşmaz', G({'plaka': '34XYZ111', '
 ta = get(a, '/eslesmeyen-kayitlar').get_data(as_text=True); tb = get(b, '/eslesmeyen-kayitlar').get_data(as_text=True)
 k('A dükkânı kendi bekleyenlerini görür', 'Kayıt no: K2' in ta and 'Kayıt no: C1' in ta)
 k('B dükkânı A\'nın bekleyenlerini görmez', 'Kayıt no: K2' not in tb and 'Kayıt no: C1' not in tb)
-k('menüde rozet yalnızca ilgili dükkânda', b'E\xc5\x9fle\xc5\x9fmeyen' in get(a, '/panel').data and b'E\xc5\x9fle\xc5\x9fmeyen' not in get(b, '/panel').data)
+k('menüde rozet yalnızca ilgili dükkânda', 'Dış sistem <span class="badge text-bg-danger">' in get(a, '/panel').get_data(as_text=True) and 'Dış sistem <span class="badge text-bg-danger">' not in get(b, '/panel').get_data(as_text=True))
 k('B dükkânı A\'nın kaydını işleyemez', post(b, '/eslesmeyen-kayitlar/K2/yoksay', '/panel').status_code == 302 and dbx(ia).execute("select durum from entegrasyon_kayit where kayit_no='K2'").fetchone()[0] == 'beklemede')
 k('A dükkânı yoksay yapar', post(a, '/eslesmeyen-kayitlar/K2/yoksay', '/panel').status_code == 302 and dbx(ia).execute("select durum from entegrasyon_kayit where kayit_no='K2'").fetchone()[0] == 'yoksayildi')
 k('yeni iş emri olarak aç (yalnızca A\'da)', post(a, '/eslesmeyen-kayitlar/C1/yeni', '/panel').status_code == 302 and dbx(ia).execute("select count(*) from araclar where plaka='35ABC123'").fetchone()[0] == 1 and dbx(ib).execute("select count(*) from araclar where plaka='35ABC123'").fetchone()[0] == 0)
@@ -129,4 +129,18 @@ k('eski hatalı-anahtar kayıtları temizlenir (sözlük büyümez)',len(A._ent_
 # --- belgeler ---
 for f in ('docs/ENTEGRASYON-API.md', 'docs/openapi.yaml', 'docs/Servis-Defteri-Entegrasyon-API.pdf', 'docs/ornekler/ornek.py', 'docs/ornekler/ornek.sh', 'docs/ornekler/ornek.js', 'docs/ornekler/ornek.cs', 'docs/ornekler/ornek.ps1', 'disaridan_gonder/disaridan_gonder.py'):
     k('dosya var: ' + f, os.path.isfile(f))
+# --- birleşik "Dış sistem" sayfası: Karar bekleyen + Reddedilen ---
+a = dukkan_giris('ahmet-oto', 'Ahmet-Sifre-1'); b = dukkan_giris('veli-servis', 'Veli-Sifre-12')
+r = post(y, f'/yonetici/{ia}/api', '/yonetici', eylem='uret'); KA3 = re.search(r'API anahtarı: <b[^>]*>([^<]+)</b>', r.get_data(as_text=True)).group(1)
+r = api.post('/api/v1/is-emirleri', data={'plaka': '34ABC123', 'kayit_no': 'FORM1', 'eposta': 'ali@ornek.com', 'tel': '0555 111 22 33', 'km': '99999999999', 'musteri_ad': 'Ali Veli', 'yapilan_islem': 'Lastik'}, headers={'X-API-Key': KA3, 'X-Forwarded-Proto': 'https'}, environ_overrides={'REMOTE_ADDR': '10.1.2.3'})
+k('form isteği reddedildi (422)', r.status_code == 422)
+red = get(a, '/eslesmeyen-kayitlar?sekme=red').get_data(as_text=True)
+k('Reddedilen sekmesi: plaka, ad, işlem ve hata görünür', 'ABC' in red and 'Ali Veli' in red and 'Lastik' in red and 'km çok büyük' in red)
+k('Reddedilen sekmesi: telefon/e-posta gizli', 'ali@ornek.com' not in red and '0555' not in red and 'E-posta: ***' in red and 'Telefon: ***' in red)
+k('iki sekme de sayfada', 'Karar bekleyen' in red and 'Reddedilen' in red)
+k('Reddedilen yalnız kendi dükkânında görünür', 'FORM1' not in get(b, '/eslesmeyen-kayitlar?sekme=red').get_data(as_text=True))
+k('üst çubuk: tek "Dış sistem" düğmesi, eski "Eşleşmeyen" yok', get(a, '/panel').get_data(as_text=True).count('Dış sistemden gelen kayıtlar') == 1 and 'Eşleşmeyen <' not in get(a, '/panel').get_data(as_text=True))
+x = dbx(ia); x.execute("UPDATE entegrasyon_hata SET zaman='2020-01-01 00:00:00'"); x.commit(); x.close()
+k('7 günden eski reddedilenler yalnız rozetsiz düğmeyi bile göstermez', get(a, '/panel').get_data(as_text=True).count('Dış sistemden gelen kayıtlar') == 1)
+
 print(f'{ok} geçti, {fail} başarısız'); sys.exit(1 if fail else 0)

@@ -82,7 +82,7 @@ k('A kendi etiketini alır', r.status_code == 200 and tokA in t and tokB not in 
 k('etikette dükkân adı yazar', '"AHMET"' in t)
 k('B’nin 1 numaralı aracı B’nin etiketi', tokB in base64.b64decode(P(b, '/araclar/1/tspl', adet='1').get_json()['veri']).decode())
 k('girişsiz etiket verilmez', yeni().post('/araclar/1/tspl', environ_overrides=R).status_code in (302, 400, 401))
-k('USB yazdırma rotaları kaldırıldı', P(a, '/araclar/1/yazdir').status_code == 404 and get(a, '/yazici/durum').status_code == 404)
+k('sunucu USB yazıcıya yazmaz: /yazici/durum yok; /yazdir yalnız ajan açıksa kuyruğa alır (ajan_test.py)', get(a, '/yazici/durum').status_code == 404 and P(a, '/araclar/1/yazdir').status_code == 400)
 k('etiket sayfasında yalnızca Bluetooth düğmesi', 'id="bt"' in get(a, '/arac/1/qr').get_data(as_text=True) and 'id="bas"' not in get(a, '/arac/1/qr').get_data(as_text=True))
 
 # --- yedek indir ---

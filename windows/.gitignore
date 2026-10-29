@@ -1,0 +1,30 @@
+# Çalışma verisi ve sırlar — ASLA commit'leme
+data/
+.env
+*.db
+*.db-wal
+*.db-shm
+ILK_SIFRE.txt
+.password_hash
+.secret_key
+deploy/servis-defteri.service
+
+# Python / ortam
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.log
+.pytest_cache/
+
+# Yerel logo (kendi logon)
+static/logo.png
+static/logo.jpg
+static/logo.svg
+static/logo.webp
+
+# Yedekler / editör
+*.bak
+.DS_Store
+.idea/
+.vscode/

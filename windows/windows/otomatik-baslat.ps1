@@ -4,6 +4,7 @@
 #   ServisDefteri-YedekKontrol : 15 dakikada bir USB / Google Drive yedeginin gerekip gerekmedigine bakar
 param([string]$Kok)
 $ErrorActionPreference = 'Stop'
+try {
 $py  = Join-Path $Kok 'venv\Scripts\pythonw.exe'
 $pyc = Join-Path $Kok 'venv\Scripts\python.exe'
 if (-not (Test-Path $py)) { Write-Host 'Once kurulum (SERVIS-DEFTERI-KUR.bat) calistirilmali.'; exit 1 }
@@ -28,3 +29,10 @@ try { Stop-ScheduledTask -TaskName 'ServisDefteri' -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 Start-ScheduledTask -TaskName 'ServisDefteri'
 Write-Host 'Tamam: uygulama artik bilgisayar acilinca kendiliginden baslar. Gece 02:00 yedek alinir; USB bellek takilinca da yedeklenir.'
+} catch {
+  Write-Host ''
+  Write-Host ('HATA (otomatik baslatma gorevi): ' + $_.Exception.Message) -ForegroundColor Red
+  try { Write-Host ('Konum: ' + ($_.InvocationInfo.PositionMessage -replace '\s+',' ')) -ForegroundColor Red } catch {}
+  Write-Host 'Olasi neden: yonetici olarak calistirilmadi ya da sirket bilgisayarinda grup ilkesi gorev olusturmayi engelliyor.' -ForegroundColor Yellow
+  exit 1
+}

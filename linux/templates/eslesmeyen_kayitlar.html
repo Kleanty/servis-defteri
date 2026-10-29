@@ -1,6 +1,12 @@
 {% extends 'base.html' %}{% block content %}
-<h4 class="mb-1">🔗 Eşleşmeyen kayıtlar (dış sistemden gelen)</h4>
-<div class="small-muted mb-3">Dış sistemden (ör. muhasebe programı) gelen kayıt tek bir açık iş emriyle güvenle eşleşemedi. Hangi iş emrine ait olduğunu sen seç; hiçbir şey kendiliğinden tahmin edilmez.</div>
+<h4 class="mb-1">🔗 Dış sistemden gelenler</h4>
+<div class="small-muted mb-3">Muhasebe programı gibi dış sistemlerden gelen kayıtlar. Hiçbir şey kendiliğinden tahmin edilmez.</div>
+<div class="d-flex gap-1 p-1 mb-3 rounded-3" style="background:#e2e8f0">
+  <a class="btn flex-fill fw-bold {{ 'bg-white' if sekme=='bekleyen' else '' }}" href="{{url_for('eslesmeyen_kayitlar',sekme='bekleyen')}}">Karar bekleyen {% if liste %}<span class="badge text-bg-danger">{{liste|length}}</span>{% endif %}</a>
+  <a class="btn flex-fill fw-bold {{ 'bg-white' if sekme=='red' else '' }}" href="{{url_for('eslesmeyen_kayitlar',sekme='red')}}">Reddedilen {% if red %}<span class="badge text-bg-secondary">{{red|length}}</span>{% endif %}</a>
+</div>
+{% if sekme=='bekleyen' %}
+<div class="small-muted mb-3">Gelen kayıt tek bir açık iş emriyle güvenle eşleşemedi. Hangi iş emrine ait olduğunu sen seç.</div>
 {% for x in liste %}
 <div class="card shadow-sm mb-3"><div class="card-body">
   <div class="d-flex justify-content-between flex-wrap gap-2"><div class="fs-5 fw-bold">{{x.plaka_goster}}{% if x.v.km %} · {{x.v.km}} km{% endif %}</div><div class="small-muted">{{x.zaman}}</div></div>
@@ -24,4 +30,21 @@
   </div>
 </div></div>
 {% else %}<div class="alert alert-success">Bekleyen kayıt yok. 🎉</div>{% endfor %}
+{% else %}
+<div class="alert alert-warning small">Dış sistemin gönderdiği ama <b>kabul edilmeyen</b> istekler. Burada işlem yapılmaz: hatayı dış sistemde düzeltip yeniden gönderin. Telefon, adres ve e-posta gizlenir. Son 100 kayıt gösterilir.</div>
+{% for x in red %}
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <div class="d-flex justify-content-between flex-wrap gap-2"><div class="fs-5 fw-bold">{{ x.plaka_goster or 'Plaka yok' }}{% if x.km %} · {{x.km}} km{% endif %}</div><div class="small-muted">{{x.zaman}}</div></div>
+  <div class="text-danger small fw-semibold mb-2">{{x.hata}}</div>
+  <div class="small">
+    {% if x.ad %}<div>Müşteri: {{x.ad}}</div>{% endif %}
+    {% if x.islem %}<div>İşlemler: {{x.islem}}</div>{% endif %}
+    {% if x.durum %}<div>Durum: {{x.durum}}</div>{% endif %}
+    {% if x['not'] %}<div>Not: {{x['not']}}</div>{% endif %}
+    {% for g in x.gizli %}<div>{{g}}: ***</div>{% endfor %}
+    {% if x.kayit_no %}<div class="small-muted">Kayıt no: {{x.kayit_no}}</div>{% endif %}
+  </div>
+</div></div>
+{% else %}<div class="alert alert-success">Reddedilen istek yok. 🎉</div>{% endfor %}
+{% endif %}
 {% endblock %}

@@ -11,7 +11,7 @@ Tek etiket türü: **58 × 40 mm, yatay** (solda büyük QR, sağda işletme ad�
 4. Panelde araç → **Etiket** → **🖨️ Yazıcıdan Çıkart (USB)**. Sağ üstteki rozet yazıcının "Hazır" olup olmadığını gösterir.
 
 ## Nasıl gönderiyor?
-1. **Doğrudan USB (pyusb):** Yazıcı bulunur (varsayılan kimlik XP-470B için `2d37:82c5`, `ETIKET_USB_ID` ile değiştirilebilir; yoksa yazıcı/üretici sınıflı ilk USB aygıtı aranır). Linux'un `usblp` sürücüsü gerekirse ayrılır ve ham TSPL gönderilir. Bazı yazıcılar `/dev/usb/lp0` üzerinden yazıyı kabul edip yanıt vermez; bu yüzden bu yol önceliklidir.
+1. **Doğrudan USB (pyusb):** Yazıcı bulunur (varsayılan kimlik XP-470B için `2d37:82c5`, `ETIKET_USB_ID` ile değiştirilebilir; yoksa yazıcı sınıfı (07) arayüzlü ilk USB aygıtı aranır; üreticiye özel sınıfla çalışan yazıcıda yanlış cihaza yazmamak için `ETIKET_USB_ID` yazmak gerekir). Linux'un `usblp` sürücüsü gerekirse ayrılır ve ham TSPL gönderilir. Bazı yazıcılar `/dev/usb/lp0` üzerinden yazıyı kabul edip yanıt vermez; bu yüzden bu yol önceliklidir.
 2. **Yedek yol:** USB izni yok ya da pyusb kurulu değilse `/dev/etiket` veya `/dev/usb/lp*` denenir.
 3. `.env` içinde `ETIKET_AYGIT=/dev/xxx` verirsen yalnızca o aygıt kullanılır.
 
@@ -50,4 +50,4 @@ Bu yöntem etiketi `58x40 mm` TSPL komutlarıyla gönderir; yazıcı ayarları (
 Varsayılan kaydırma XP-470B + 58×40 mm rulo için ayarlanmıştır. Kendi yazıcında etiket kayık çıkarsa önce `ETIKET_X_OFFSET` ve `ETIKET_Y_OFFSET` değerlerini değiştir.
 Plaka uzun ya da yabancıysa yazı tipi otomatik küçülür, etiketten taşmaz.
 
-Bluetooth ile telefondan yazdırma ve QR indirme seçenekleri ekrandan kaldırıldı; etiket yalnızca USB etiket yazıcısından çıkar.
+QR indirme seçeneği ekrandan kaldırıldı. Etiket, sunucuya USB ile bağlı yazıcıdan ya da (yukarıdaki koşullarla) telefondan Bluetooth ile çıkar.

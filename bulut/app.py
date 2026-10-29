@@ -6,6 +6,7 @@ from urllib.parse import quote
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g, abort, Response, jsonify, has_request_context
 from itsdangerous import URLSafeSerializer, BadSignature
 import base64
+os.umask(0o077)      # veritabanı, log ve yedek dosyaları yalnız çalıştıran kullanıcıya açık (0600/0700)
 import qrcode
 import etiket_yazici as EY
 
@@ -78,6 +79,8 @@ APP_PASSWORD_HASH=_hash_yukle()
 # QR kodlarındaki herkese açık adres (alan adın). .env ile PUBLIC_BASE_URL=https://alanadiniz.com verilir.
 # Boşsa o anki istek adresi kullanılır (yerel denemede çalışır; telefondan okutulacak QR için gerçek adres şart).
 PUBLIC_BASE_URL=os.environ.get('PUBLIC_BASE_URL','').rstrip('/')
+VITRIN_EPOSTA=os.environ.get('VITRIN_EPOSTA','ahmet.taner.2002@hotmail.com').strip()
+if VITRIN_EPOSTA in ('-','0') or not re.fullmatch(r'[^\s@<>"\']{1,64}@[^\s@<>"\']{1,120}',VITRIN_EPOSTA): VITRIN_EPOSTA=''   # '-' yazarsan vitrinde iletişim bölümü gizlenir
 SAAT_DILIMI=os.environ.get('SAAT_DILIMI','Europe/Istanbul').strip()      # dış sistemden gelen saat dilimli tarihler bu saate çevrilir
 # İşletme adı/telefon/adres .env'den DEĞİL, giriş yapan dükkândan gelir (yönetici sayfasında girilir).
 # Yetkili servislerde yapılan işlemler ("İşlemler ve arama" paneli).
@@ -367,6 +370,7 @@ def init_db(yol,kod):
     c.execute('CREATE TABLE IF NOT EXISTS entegrasyon_hata(id INTEGER PRIMARY KEY AUTOINCREMENT,zaman TEXT,kayit_no TEXT,hata TEXT,govde TEXT)')
     c.execute('CREATE TABLE IF NOT EXISTS ozel_islem(id INTEGER PRIMARY KEY AUTOINCREMENT,ad TEXT NOT NULL UNIQUE COLLATE NOCASE,olusturuldu_at TEXT)')
     c.execute('CREATE TABLE IF NOT EXISTS cihazlar(id INTEGER PRIMARY KEY AUTOINCREMENT,ad TEXT NOT NULL,kod TEXT NOT NULL,olusturuldu_at TEXT,son_gorulme_at TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS yazdirma_isleri(id INTEGER PRIMARY KEY AUTOINCREMENT,olusturuldu_at TEXT NOT NULL,arac_id INTEGER,plaka TEXT,adet INTEGER NOT NULL DEFAULT 1,veri TEXT NOT NULL,durum TEXT NOT NULL DEFAULT \'bekliyor\',mesaj TEXT,alindi_at TEXT,bitti_at TEXT)')
     c.execute('CREATE TABLE IF NOT EXISTS hareketler(id INTEGER PRIMARY KEY AUTOINCREMENT,zaman TEXT NOT NULL,cihaz_id INTEGER,cihaz TEXT,ip TEXT,olay TEXT NOT NULL)')
     c.execute('CREATE INDEX IF NOT EXISTS ix_hareketler_zaman ON hareketler(zaman)')
     c.execute("DELETE FROM cop WHERE silindi_at<?",((datetime.now()-timedelta(days=COP_GUN)).strftime('%Y-%m-%d %H:%M:%S'),))
@@ -416,7 +420,7 @@ def yonetim_init():
     c=yonetim_db(); c.execute('PRAGMA journal_mode=WAL')
     c.execute('''CREATE TABLE IF NOT EXISTS dukkanlar(id INTEGER PRIMARY KEY AUTOINCREMENT,kod TEXT NOT NULL UNIQUE,kullanici TEXT NOT NULL UNIQUE COLLATE NOCASE,
         ad TEXT NOT NULL,tel TEXT,adres TEXT,hash TEXT NOT NULL,oturum_surum INTEGER NOT NULL DEFAULT 0,aktif INTEGER NOT NULL DEFAULT 1,gecici INTEGER NOT NULL DEFAULT 1,olusturuldu_at TEXT)''')
-    for n in ['api_hash TEXT','api_olusturuldu_at TEXT']: addcol(c,'dukkanlar',n)       # dış sistem API anahtarının özeti (anahtarın kendisi saklanmaz)
+    for n in ['api_hash TEXT','api_olusturuldu_at TEXT','ajan_hash TEXT','ajan_olusturuldu_at TEXT']: addcol(c,'dukkanlar',n)       # dış sistem API anahtarının özeti (anahtarın kendisi saklanmaz)
     c.commit(); c.close()
 def _dukkan_sor(sql,args=()):
     c=yonetim_db()
@@ -572,6 +576,7 @@ def _yonetici_liste():
         d['yedek_kotu']=sn is None or sn>48*3600
         d['bozuk']=d['id'] in BOZUK_DUKKAN
         d['api']=bool(d.get('api_hash'))
+        d['ajan']=bool(d.get('ajan_hash')); d['ajan_bagli']=ajan_bagli(d['id'])
         out.append(d)
     return out
 @app.route('/yonetici')
@@ -618,6 +623,22 @@ def yonetici_api(i):
     if not anahtar: flash(f"{d['ad']} için API anahtarı kapatıldı (eski anahtar artık çalışmaz).",'success'); return redirect(url_for('yonetici'))
     r=app.make_response(render_template('yonetici.html',dukkanlar=_yonetici_liste(),yeni={'kullanici':d['kullanici'],'ad':d['ad'],'api':anahtar,'ne':'API anahtarı üretildi'}))
     r.headers['Cache-Control']='no-store'; return r
+@app.route('/yonetici/<int:i>/ajan',methods=['POST'])
+@yonetici_gerekli
+def yonetici_ajan(i):
+    d=dukkan_getir(i)
+    if not d: abort(404)
+    eylem=request.form.get('eylem','')
+    if eylem not in ('uret','kapat'): abort(400)
+    anahtar=f'ya_{d["kod"]}_'+secrets.token_urlsafe(30) if eylem=='uret' else None
+    c=yonetim_db()
+    try: c.execute('UPDATE dukkanlar SET ajan_hash=?,ajan_olusturuldu_at=? WHERE id=?',(hashlib.sha256(anahtar.encode()).hexdigest() if anahtar else None,now() if anahtar else None,i)); c.commit()
+    finally: c.close()
+    _ajan_son.pop(i,None)
+    app.logger.info('Dükkân ajan anahtarı %s: %s | ip=%s','üretildi/yenilendi' if anahtar else 'KAPATILDI',d['kullanici'],client_ip())
+    if not anahtar: flash(f"{d['ad']} için yazdırma ajanı kapatıldı (eski anahtar artık çalışmaz).",'success'); return redirect(url_for('yonetici'))
+    r=app.make_response(render_template('yonetici.html',dukkanlar=_yonetici_liste(),yeni={'kullanici':d['kullanici'],'ad':d['ad'],'ajan':anahtar,'ne':'yazdırma ajanı anahtarı üretildi'}))
+    r.headers['Cache-Control']='no-store'; return r
 @app.route('/yonetici/<int:i>/bilgi',methods=['POST'])
 @yonetici_gerekli
 def yonetici_bilgi(i):
@@ -654,8 +675,9 @@ def yedek_indir():
 
 @app.route('/')
 def anasayfa():
-    # Bu sürümde vitrin yok: giriş yapmışsa panele, yapmamışsa giriş sayfasına.
-    return redirect(url_for('dashboard') if giris_var() else url_for('login'))
+    # Giriş yapmış usta panele gider; ziyaretçi vitrini (tanıtım sayfası) görür. Vitrinde veri yok, herkese açık.
+    if giris_var(): return redirect(url_for('dashboard'))
+    return render_template('vitrin.html',eposta=VITRIN_EPOSTA)
 @app.route('/panel')
 @login_required
 def dashboard():
@@ -957,7 +979,6 @@ def arac_etiket_onizleme(arac_id):
     if not a: abort(404)
     return Response(EY.onizleme_png(EY.tspl_komutlari(a['plaka'],public_url(a),g.dukkan['ad'])),mimetype='image/png')
 
-# ===================== YARDIMCILAR (API) =====================
 def api_login_required(v):
     # Sayfa yönlendirmesi yerine JSON 401 döner (fetch ile çağrıldığı için).
     @wraps(v)
@@ -965,6 +986,104 @@ def api_login_required(v):
         if not giris_var(): return jsonify(ok=False,hata='Oturum süresi dolmuş. Sayfayı yenileyip tekrar giriş yap.'),401
         return v(*a,**kw)
     return w
+
+# ===================== YAZDIRMA AJANI (dükkân bilgisayarındaki USB yazıcı) =====================
+# Sunucu dükkân dışında olduğu için yazıcıya doğrudan erişemez. Dükkân bilgisayarında çalışan küçük "ajan" sunucuya kendisi bağlanır
+# (dışarı doğru HTTPS; modemden port açmak gerekmez), kuyruktaki etiketi alır ve yazıcıya ham TSPL olarak gönderir.
+# Kimlik: dükkâna özel ajan anahtarı (ya_<dükkân kodu>_<rastgele>), yalnız yönetici üretir; API anahtarından bağımsızdır.
+AJAN_BEKLEYEN_SN=1800        # bu süre içinde alınmayan etiket "süresi doldu" olur (bilgisayar kapalıysa yığılıp sonra toplu basılmasın)
+AJAN_ALINAN_SN=120           # alınıp sonuç gelmeyen iş: basılmış olabilir, tekrar BASILMAZ; "emin değil" olarak işaretlenir
+AJAN_SINIR=20                # kuyrukta en çok bu kadar bekleyen iş
+AJAN_BAGLI_SN=45             # ajan bu süre içinde sorduysa "bağlı" sayılır
+_ajan_son={}                 # dükkân id -> son sorgu zamanı (bellekte; yeniden başlatmada sıfırlanır)
+def ajan_bagli(dukkan_id):
+    t=_ajan_son.get(dukkan_id); return bool(t) and time.time()-t<AJAN_BAGLI_SN
+_ajan_sil_son={}             # dükkân id -> eski kayıtların en son silindiği zaman (saatte bir)
+def _ajan_temizle(db):
+    """Süresi dolan işleri 'hata' yapar. Sorgu/yoklama sık olduğu için önce OKUR; yazma yalnız gerçekten gerekirse (SQLite yazma kilidi boşuna alınmaz)."""
+    sn=lambda n:(datetime.now()-timedelta(seconds=n)).strftime('%Y-%m-%d %H:%M:%S')
+    b,a=sn(AJAN_BEKLEYEN_SN),sn(AJAN_ALINAN_SN)
+    if db.execute("SELECT 1 FROM yazdirma_isleri WHERE (durum='bekliyor' AND olusturuldu_at<?) OR (durum='alindi' AND alindi_at<?) LIMIT 1",(b,a)).fetchone():
+        db.execute("UPDATE yazdirma_isleri SET durum='hata',mesaj=?,bitti_at=? WHERE durum='bekliyor' AND olusturuldu_at<?",('Süresi doldu: dükkân bilgisayarı etiketi almadı (kapalı ya da ajan çalışmıyor).',now(),b))
+        db.execute("UPDATE yazdirma_isleri SET durum='hata',mesaj=?,bitti_at=? WHERE durum='alindi' AND alindi_at<?",('Yazıcıdan yanıt gelmedi. Etiket çıkmış olabilir; kontrol et, çıkmadıysa tekrar bas.',now(),a))
+        db.commit()
+    dk=g.dukkan['id']
+    if time.time()-_ajan_sil_son.get(dk,0)>3600:
+        _ajan_sil_son[dk]=time.time()
+        db.execute("DELETE FROM yazdirma_isleri WHERE olusturuldu_at<?",((datetime.now()-timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S'),)); db.commit()
+@app.route('/araclar/<int:arac_id>/yazdir',methods=['POST'])
+@login_required
+def arac_yazdir(arac_id):
+    if not g.dukkan.get('ajan_hash'): return jsonify(ok=False,mesaj='Dükkân bilgisayarından basım bu dükkân için kapalı. Yöneticiden "yazdırma ajanı" iste.'),400
+    db=get_db(); a=db.execute('SELECT a.plaka,a.qr_token FROM araclar a WHERE a.id=?',(arac_id,)).fetchone()
+    if not a: abort(404)
+    try: adet=min(max(int(request.form.get('adet','1') or 1),1),20)
+    except ValueError: adet=1
+    _ajan_temizle(db)
+    var=db.execute("SELECT id FROM yazdirma_isleri WHERE arac_id=? AND adet=? AND durum='bekliyor' ORDER BY id DESC LIMIT 1",(arac_id,adet)).fetchone()
+    if var: return jsonify(ok=True,is_id=var['id'],bagli=ajan_bagli(g.dukkan['id']),bekleyen=True)       # aynı etiket zaten bekliyor (bilgisayar kapalıyken art arda dokunuş yığılmaz)
+    if db.execute("SELECT COUNT(*) FROM yazdirma_isleri WHERE durum IN ('bekliyor','alindi')").fetchone()[0]>=AJAN_SINIR:
+        return jsonify(ok=False,mesaj='Kuyrukta çok etiket bekliyor. Dükkân bilgisayarı açık ve ajan çalışıyor mu?'),429
+    try: veri=EY.tspl_bayt(EY.tspl_komutlari(a['plaka'],public_url(a),g.dukkan['ad']),adet)
+    except Exception as e:  # noqa: BLE001
+        app.logger.exception('TSPL hazırlanamadı: %r',e); return jsonify(ok=False,mesaj='Etiket hazırlanamadı (iç hata).'),500
+    i=db.execute('INSERT INTO yazdirma_isleri(olusturuldu_at,arac_id,plaka,adet,veri) VALUES(?,?,?,?,?)',(now(),arac_id,a['plaka'],adet,base64.b64encode(veri).decode('ascii'))).lastrowid; db.commit()
+    log_olay(f'Etiket kuyruğa alındı (dükkân bilgisayarı): {a["plaka"]} x{adet}')
+    return jsonify(ok=True,is_id=i,bagli=ajan_bagli(g.dukkan['id']))
+@app.route('/yazdirma/<int:is_id>/durum')
+@api_login_required
+def yazdirma_durum(is_id):
+    db=get_db(); _ajan_temizle(db)
+    r=db.execute('SELECT durum,mesaj FROM yazdirma_isleri WHERE id=?',(is_id,)).fetchone()
+    if not r: return jsonify(ok=False,durum='yok',mesaj='İş bulunamadı.'),404
+    return jsonify(ok=True,durum=r['durum'],mesaj=r['mesaj'] or '',bagli=ajan_bagli(g.dukkan['id']))
+def _ajan_kimlik():
+    """Ajan anahtarından dükkânı bulur ve g.dukkan'a koyar. Hata varsa (yanıt, kod) döner; yoksa None."""
+    sema=(request.headers.get('X-Forwarded-Proto','').split(',')[0].strip().lower() or ('http' if '"scheme":"http"' in request.headers.get('CF-Visitor','').replace(' ','') else ''))
+    if ENT_HTTPS_ZORUNLU and sema=='http': return jsonify(ok=False,kod='HTTPS_REQUIRED',hata='Yalnızca HTTPS ile kullanılır (https://… adresi).'),400
+    ip='ajan:'+str(client_ip()); simdi=time.time()       # muhasebe API'siyle sayaç paylaşılmaz (ortak IP'de biri diğerini kilitlemesin)
+    if len(_ent_hatali)>500:
+        for _k in [k for k,t in _ent_hatali.items() if not t or simdi-t[-1]>=300]: _ent_hatali.pop(_k,None)
+    _ent_hatali[ip]=[t for t in _ent_hatali.get(ip,[]) if simdi-t<300]
+    if len(_ent_hatali[ip])>=10: return jsonify(ok=False,kod='RATE_LIMITED',hata='Çok fazla hatalı anahtar denemesi, 5 dakika sonra tekrar dene.'),429
+    verilen=(request.headers.get('X-API-Key') or '').strip(); yet=request.headers.get('Authorization','')
+    if not verilen and yet.lower().startswith('bearer '): verilen=yet[7:].strip()
+    m=re.fullmatch(r'ya_([a-z0-9]{4})_[A-Za-z0-9_-]{20,64}',verilen or '')
+    d=dukkan_kod_ile(m.group(1)) if m else None
+    if not d or not d['aktif'] or not d.get('ajan_hash') or not secrets.compare_digest(hashlib.sha256(verilen.encode()).hexdigest(),d['ajan_hash']):
+        _ent_hatali[ip].append(simdi); app.logger.info('Yazdırma ajanı: geçersiz anahtar | ip=%s',ip[5:]); return jsonify(ok=False,kod='INVALID_API_KEY',hata='Geçersiz ajan anahtarı.'),401
+    g.dukkan=d
+    if d['id'] in BOZUK_DUKKAN: return jsonify(ok=False,kod='SERVER_ERROR',hata='Bu dükkânın veritabanı şu an açılamıyor.'),503
+    _ajan_son[d['id']]=time.time(); return None
+@app.route('/api/v1/ajan/ping',methods=['POST'])
+def ajan_ping():
+    h=_ajan_kimlik()
+    if h: return h
+    return jsonify(ok=True,dukkan=g.dukkan['ad'])          # kurulumda anahtar/adres denemesi: kuyruğa dokunmaz
+@app.route('/api/v1/ajan/sonraki',methods=['POST'])
+def ajan_sonraki():
+    h=_ajan_kimlik()
+    if h: return h
+    db=get_db(); _ajan_temizle(db)
+    r=db.execute("SELECT id,plaka,adet,veri FROM yazdirma_isleri WHERE durum='bekliyor' ORDER BY id LIMIT 1").fetchone()
+    if r and db.execute("UPDATE yazdirma_isleri SET durum='alindi',alindi_at=? WHERE id=? AND durum='bekliyor'",(now(),r['id'])).rowcount==1:
+        db.commit(); return jsonify({'ok':True,'is':{'id':r['id'],'plaka':r['plaka'],'adet':r['adet'],'veri':r['veri']}})
+    return jsonify({'ok':True,'is':None})
+@app.route('/api/v1/ajan/sonuc',methods=['POST'])
+def ajan_sonuc():
+    h=_ajan_kimlik()
+    if h: return h
+    d=request.get_json(silent=True)
+    if not isinstance(d,dict): return jsonify(ok=False,hata='Gövde JSON nesnesi olmalı.'),400
+    try: i=int(d.get('id'))
+    except (TypeError,ValueError,OverflowError): return jsonify(ok=False,hata='id geçersiz.'),400
+    ok=d.get('ok') is True or str(d.get('ok')).strip().lower() in ('1','true','evet')      # "false" metni doğru sayılmaz
+    mesaj=re.sub(r'\s+',' ',str(d.get('mesaj') or '')).strip()[:200]
+    db=get_db(); r=db.execute('SELECT plaka,adet FROM yazdirma_isleri WHERE id=?',(i,)).fetchone()
+    if not r: return jsonify(ok=False,hata='İş bulunamadı.'),404
+    n=db.execute("UPDATE yazdirma_isleri SET durum=?,mesaj=?,bitti_at=? WHERE id=? AND durum IN ('alindi','hata')",('basildi' if ok else 'hata',None if ok else (mesaj or 'Yazıcıya gönderilemedi.'),now(),i)).rowcount; db.commit()
+    if n: log_olay(f'Etiket {"basıldı" if ok else "BASILAMADI"} (dükkân bilgisayarı): {r["plaka"]} x{r["adet"]}'+('' if ok else f' · {mesaj}'))      # değişmeyen işe sonuç gelirse kayıt yazılmaz
+    return jsonify(ok=True,uygulandi=bool(n))
 
 # ===================== HIZLI İŞ EMRİ (tek ekran) =====================
 def arac_bul(db,plaka):
@@ -1046,9 +1165,10 @@ def _hareket_kuyruk(mesaj):
     """log_olay'dan çağrılır: olayı cihaz bilgisiyle sıraya alır; yanıt başarıyla bitince hareket_yaz veritabanına yazar."""
     if not has_request_context() or str(mesaj).startswith(HAREKET_ATLA): return
     try:
-        if request.path.startswith('/api/v1/'): cid,et=None,'Dış sistem (API)'
+        if request.path.startswith('/api/v1/ajan/'): cid,et=None,'Yazdırma ajanı (dükkân bilgisayarı)'
+        elif request.path.startswith('/api/v1/'): cid,et=None,'Dış sistem (API)'
         else:
-            c=_cihaz_oku() if (session.get('giris_yapildi') and giris_var()) else None
+            c=_cihaz_oku() if g.get('dukkan') else None      # imzalı cihaz kartı yeterli: giriş anında da cihaz adı yazılır
             cid,et=(c['id'],_cihaz_etiket(c)) if c else (None,'—')
         g.setdefault('_hareket',[]).append((now(),cid,et,str(client_ip())[:45],str(mesaj)[:300]))
     except Exception: app.logger.exception('Hareket sıraya alınamadı')
@@ -1204,7 +1324,7 @@ def is_emri_hizli():
 # Akış: usta Servis Defteri'nde plaka+km ile iş emrini açar; karşı sistem (ör. muhasebe programı) kayıt açınca POST /api/v1/is-emirleri çağırır.
 # API YENİ İŞ EMRİ AÇMAZ: o plakanın TEK açık (Tamamlandı olmayan) iş emrini bulup kaydı ona işler. Etiket basılmaz.
 # Tek güvenilir eşleşme yoksa (plaka kayıtsız / açık iş emri yok / birden fazla açık / km tutmuyor / iş emri çok eski) kayıt
-# "Eşleşmeyen kayıtlar" listesine düşer (kalıcı olarak saklanır); kimse rastgele seçilmez.
+# "Dış sistem" sayfasındaki Karar bekleyen sekmesine düşer (kalıcı olarak saklanır); kimse rastgele seçilmez.
 # İŞLEM: karşı sistem (muhasebe) son karardır -> gelen "yapilan_islem" mevcut "Yapılan işlem" alanının YERİNE yazılır; eski metin nota "Önceki işlem: ..." diye saklanır.
 # Ustanın "Ne yapılacak?" (gelis_nedeni) alanına dokunulmaz.
 # Kimlik: API anahtarı (.env: ENTEGRASYON_API_ANAHTARI), "Authorization: Bearer <anahtar>" veya "X-API-Key". Anahtar yoksa uç nokta KAPALIDIR (404).
@@ -1237,10 +1357,17 @@ def _ent_maskele(govde):
             return o
         return json.dumps(m(json.loads(govde)),ensure_ascii=False)
     except ValueError:
-        return re.sub(r'\d[\d\s().+-]{6,}\d','***',govde)      # JSON değilse 7+ haneli rakam dizilerini gizle
+        if '=' in govde and ' ' not in govde.strip():                                          # form gövdesi (a=b&c=d): gizli alanların değerini '***' yap
+            try:
+                from urllib.parse import parse_qsl
+                q=parse_qsl(govde,keep_blank_values=True)
+                if q: return '&'.join(quote(str(k),safe='')+'='+('***' if str(k).strip().lower() in _ENT_GIZLI_ALAN and v!='' else quote(v,safe='')) for k,v in q)
+            except ValueError: pass
+        govde=re.sub(r'[^\s@&=<>"\']+@[^\s@&=<>"\']+','***',govde)   # ayrıştırılamayan gövdede e-posta biçimlilerini gizle
+        return re.sub(r'\d[\d\s().+-]{6,}\d','***',govde)      # 7+ haneli rakam dizilerini gizle
 def _ent_hata_kaydet(kayit_no,hata):
     try:
-        db=get_db(); db.execute('INSERT INTO entegrasyon_hata(zaman,kayit_no,hata,govde) VALUES(?,?,?,?)',(now(),str(kayit_no or '')[:64],hata[:300],_ent_maskele(request.get_data(as_text=True))[:2000])); db.commit()
+        db=get_db(); db.execute('INSERT INTO entegrasyon_hata(zaman,kayit_no,hata,govde) VALUES(?,?,?,?)',(now(),str(kayit_no or '')[:64],hata[:300],_ent_maskele(request.get_data(as_text=True) or (json.dumps(request.form.to_dict(),ensure_ascii=False) if request.form else ''))[:2000])); db.commit()
         db.execute('DELETE FROM entegrasyon_hata WHERE id NOT IN (SELECT id FROM entegrasyon_hata ORDER BY id DESC LIMIT 500)'); db.commit()
     except sqlite3.Error: app.logger.exception('entegrasyon_hata yazılamadı')
     log_olay(f'ENTEGRASYON [{g.dukkan["kullanici"]}] reddedildi ({kayit_no}): {hata}')
@@ -1284,7 +1411,7 @@ def _ent_isle(db,ie,v,t):
         if e.lower() not in notu.lower(): notu=(notu+' | '+e if notu else e)
     durum=r['durum']; gidis=r['gidis_at']
     if v.get('durum') in DURUM_SECENEKLERI:
-        durum=v['durum']; gidis=(gidis or v.get('gidis') or t) if durum=='Tamamlandı' else None
+        durum=v['durum']; gidis=(v.get('gidis') or gidis or t) if durum=='Tamamlandı' else None
     db.execute("UPDATE is_emirleri SET yapilan_islem=?,notlar=?,giris_km=COALESCE(giris_km,?),durum=?,gidis_at=?,guncellendi_at=? WHERE id=?",(yap[:1000],notu[:1000],v.get('km'),durum,gidis,t,ie))
     if v.get('marka') and not (r['marka'] or '').strip(): db.execute('UPDATE araclar SET marka=?,guncellendi_at=? WHERE id=?',(v['marka'],t,r['arac_id']))
     if v.get('model') and not (r['model'] or '').strip(): db.execute('UPDATE araclar SET model=?,guncellendi_at=? WHERE id=?',(v['model'],t,r['arac_id']))
@@ -1388,15 +1515,39 @@ def ent_is_emri():
     except sqlite3.Error:
         db.rollback(); app.logger.exception('Entegrasyon DB hatası'); return red('Veritabanı hatası, tekrar dene.',500,'SERVER_ERROR')
 
-# --- Eşleşmeyen kayıtlar: usta/muhasebe görüp karar verir ---
+# --- Dış sistem sayfası (Karar bekleyen + Reddedilen): usta/muhasebe görüp karar verir ---
 def eslesmeyen_say():
     d=g.get('dukkan')
     if not d or d['id'] in BOZUK_DUKKAN: return 0       # bozuk dükkânın 503 sayfası çizilirken veritabanına dokunma
     try: return get_db().execute("SELECT COUNT(*) FROM entegrasyon_kayit WHERE durum='beklemede'").fetchone()[0]
     except sqlite3.Error: return 0
+def ent_red_say():
+    """Son 7 günde dış sistemden reddedilen istek sayısı (üst çubuktaki 'Dış sistem' düğmesinin görünmesi için)."""
+    d=g.get('dukkan')
+    if not d or d['id'] in BOZUK_DUKKAN: return 0
+    try: return get_db().execute("SELECT COUNT(*) FROM entegrasyon_hata WHERE zaman>=?",((datetime.now()-timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S'),)).fetchone()[0]
+    except sqlite3.Error: return 0
+def _ent_red_ozet(govde):
+    """entegrasyon_hata.govde (telefon/adres/e-posta zaten '***' yapılmış JSON ya da form gövdesi) -> ekranda gösterilecek alanlar."""
+    d={}
+    try:
+        j=json.loads(govde or '')
+        if isinstance(j,dict): d=j
+    except ValueError:
+        try:
+            from urllib.parse import parse_qsl
+            s=(govde or '').strip()
+            d=dict(parse_qsl(s,keep_blank_values=True)) if s and ' ' not in s else {}
+        except ValueError: d={}
+    def al(k):
+        x=d.get(k)
+        if isinstance(x,list): x=', '.join(str(i) for i in x)
+        return re.sub(r'\s+',' ',str(x if x is not None else '')).strip()[:300]
+    gizli=[ad for ad,anahtarlar in (('Telefon',('telefon','tel','phone')),('E-posta',('eposta','e-posta','email')),('Adres',('adres','address'))) if any(str(d.get(k) or '').strip() for k in anahtarlar)]
+    return {'plaka':al('plaka'),'km':al('km'),'ad':al('musteri_ad'),'islem':al('yapilan_islem'),'not':al('not'),'durum':al('durum'),'gizli':gizli}
 @app.context_processor
 def ent_bagla():
-    return {'eslesmeyen':eslesmeyen_say() if giris_var() else 0}
+    return {'eslesmeyen':eslesmeyen_say() if giris_var() else 0,'ent_red7':ent_red_say() if giris_var() else 0}
 @app.route('/eslesmeyen-kayitlar')
 @login_required
 def eslesmeyen_kayitlar():
@@ -1405,7 +1556,12 @@ def eslesmeyen_kayitlar():
         v=json.loads(r['veri'] or '{}'); a=arac_bul(db,v.get('plaka','')) if v.get('plaka') else None
         adaylar=[dict(x) for x in _ent_acik_isemirleri(db,a['id'])] if a else []
         liste.append({'kayit_no':r['kayit_no'],'neden':r['neden'],'zaman':r['olusturuldu_at'],'v':v,'adaylar':adaylar,'plaka_goster':plaka_goster(v.get('plaka','')),'arac_var':bool(a)})
-    return render_template('eslesmeyen_kayitlar.html',liste=liste)
+    red=[]
+    for r in db.execute("SELECT zaman,kayit_no,hata,govde FROM entegrasyon_hata ORDER BY id DESC LIMIT 100").fetchall():
+        o=_ent_red_ozet(r['govde']); o.update(zaman=r['zaman'],kayit_no=r['kayit_no'],hata=r['hata'],plaka_goster=plaka_goster(o['plaka']) if o['plaka'] else ''); red.append(o)
+    sekme=request.args.get('sekme')
+    if sekme not in ('bekleyen','red'): sekme='red' if (red and not liste) else 'bekleyen'      # bekleyen yoksa ve reddedilen varsa doğrudan reddedilenler açılır
+    return render_template('eslesmeyen_kayitlar.html',liste=liste,red=red,sekme=sekme)
 @app.route('/eslesmeyen-kayitlar/<path:kayit_no>/<eylem>',methods=['POST'])
 @login_required
 def eslesmeyen_islem(kayit_no,eylem):
@@ -1426,7 +1582,7 @@ def eslesmeyen_islem(kayit_no,eylem):
         else: abort(404)
         db.commit()
     except sqlite3.Error:
-        db.rollback(); app.logger.exception('Eşleşmeyen kayıt işlem hatası'); flash('Kaydedilemedi, tekrar dene.','danger')
+        db.rollback(); app.logger.exception('Dış sistem kaydı işlem hatası'); flash('Kaydedilemedi, tekrar dene.','danger')
     return redirect(url_for('eslesmeyen_kayitlar'))
 
 # ===================== ÇÖP KUTUSU (silinenleri geri getir) =====================

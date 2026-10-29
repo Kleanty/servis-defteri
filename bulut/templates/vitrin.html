@@ -1,0 +1,90 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1f6b4a">
+<link rel="icon" href="/static/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="48x48" href="/static/favicon-48.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<title>Servis Defteri · Küçük oto servisler için iş emri defteri</title>
+<meta name="description" content="Araç girişi, işlemler, parçalar ve ödemeler tek yerde. Kurulum yok, tarayıcıdan açılır. QR etiket ve etiket yazıcı desteği.">
+<meta property="og:title" content="Servis Defteri"><meta property="og:description" content="Küçük oto servisler için iş emri defteri."><meta property="og:image" content="/static/og-image.png">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#17201b;background:#f6f8f5;line-height:1.5}
+a{color:#1f6b4a}a:hover{color:#124a31}
+.w{max-width:1160px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:10px;font-weight:600;font-size:16px;text-decoration:none}
+.btn-p{background:#1f6b4a;color:#fff}.btn-p:hover{background:#124a31;color:#fff}
+.btn-o{border:2px solid #1f6b4a;color:#1f6b4a;background:#fff}.btn-o:hover{background:#e7f1ea;color:#124a31}
+header{background:#fff;border-bottom:1px solid #dbe4dd}
+.hd{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding-top:12px;padding-bottom:12px}
+.marka{display:flex;align-items:center;gap:10px;flex-grow:1;font-size:20px;font-weight:700;color:#17201b;text-decoration:none}
+nav{display:flex;flex-wrap:wrap;gap:4px 22px;align-items:center}
+nav a.l{text-decoration:none;color:#33413a;font-size:15px;min-height:44px;display:inline-flex;align-items:center}
+h1{margin:0;font-size:clamp(30px,7vw,46px);line-height:1.15;letter-spacing:-.5px}
+h2{margin:0 0 28px;font-size:clamp(24px,5vw,32px)}
+h3{margin:0 0 8px;font-size:19px}
+.hero{padding-top:clamp(32px,8vw,64px);padding-bottom:40px;display:flex;flex-wrap:wrap;gap:40px;align-items:center}
+.hero>div{flex:1 1 440px;min-width:0}.hero>.tel{flex-basis:360px}
+.rozet{display:inline-block;background:#e7f1ea;color:#124a31;font-weight:600;font-size:14px;padding:6px 12px;border-radius:999px;margin-bottom:20px}
+.lead{margin:20px 0;font-size:19px;color:#33413a}
+.bt{display:flex;flex-wrap:wrap;gap:12px}
+.tel{display:flex;justify-content:center;gap:20px}
+.tel img{width:calc(50% - 10px);max-width:240px;height:auto;aspect-ratio:1/2;border-radius:22px;border:1px solid #cfd9d2;box-shadow:0 8px 24px rgba(23,32,27,.12);background:#fff}
+.tel img+img{margin-top:40px}
+.sec{padding-top:48px;padding-bottom:48px}
+.kart-liste{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.kart{background:#fff;border:1px solid #dbe4dd;border-radius:14px;padding:24px}
+.kart p{margin:0;color:#33413a}
+.bant{background:#fff;border-top:1px solid #dbe4dd;border-bottom:1px solid #dbe4dd}
+.bant .w{padding-top:56px;padding-bottom:56px;display:flex;flex-wrap:wrap;gap:40px;align-items:center}
+.bant .w>div{flex:1 1 400px;min-width:0}.bant .w>.tel{flex-basis:360px}
+.adim{display:flex;gap:16px;align-items:flex-start;margin-top:20px;color:#33413a}
+.adim b.n{flex:0 0 36px;height:36px;border-radius:50%;background:#1f6b4a;color:#fff;display:flex;align-items:center;justify-content:center}
+.adim strong{color:#17201b}
+.ilet{padding:16px 20px 64px}
+.ilet-k{background:#e7f1ea;border:1px solid #c5dacb;border-radius:20px;padding:clamp(24px,5vw,48px);display:flex;flex-wrap:wrap;gap:32px;align-items:center}
+.ilet-k>div{flex:1 1 320px;min-width:0}
+.ilet-k .kut{background:#fff;border:1px solid #dbe4dd;border-radius:14px;padding:24px}
+.ilet-k .kut p{margin:8px 0 0;color:#33413a}
+footer{background:#17201b;color:#e9efe9}
+.ft{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-top:20px;padding-bottom:20px}
+.ft span{font-size:14px;color:#c9d6cc}
+.ft a.y{color:#fff;border:1px solid #6f8577;border-radius:10px;padding:0 16px;min-height:44px;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600}
+.ft a.y:hover{background:#2a3830;color:#fff}
+.ft div{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+a:focus-visible,.btn:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
+</style></head><body>
+<header><div class="w hd">
+<a class="marka" href="{{ url_for('anasayfa') }}"><svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1f6b4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V3z"/><path d="M9 8h6M9 12h6"/></svg>Servis Defteri</a>
+<nav><a class="l" href="#ozellikler">Özellikler</a><a class="l" href="#nasil">Nasıl çalışır</a>{% if eposta %}<a class="l" href="#iletisim">İletişim</a>{% endif %}<a class="btn btn-p" href="{{ url_for('login') }}">Usta / Dükkân girişi</a></nav>
+</div></header>
+<main>
+<section class="w hero"><div>
+<span class="rozet">Küçük oto servisler için iş emri defteri</span>
+<h1>Defter, kâğıt ve kayıp fişler bitti. Her araç tek yerde.</h1>
+<p class="lead">Servis Defteri; araç girişini, yapılan işlemleri, parçaları ve ödemeleri telefonunuzdan kaydettiğiniz basit bir iş emri uygulamasıdır. Kurulum yok: tarayıcıdan açın, kullanın.</p>
+<div class="bt"><a class="btn btn-p" href="{{ url_for('login') }}">Dükkânıma gir</a>{% if eposta %}<a class="btn btn-o" href="#iletisim">Dükkânım için hesap iste</a>{% endif %}</div>
+</div><div class="tel"><img src="{{ url_for('static',filename='vitrin/panel.png') }}" alt="Servis Defteri panel ekranı" width="360" height="720"><img src="{{ url_for('static',filename='vitrin/is-emri.png') }}" alt="Yeni iş emri işlem seçici" width="360" height="720"></div></section>
+<section id="ozellikler" class="w sec"><h2>Ustanın işine yarayan şeyler</h2><div class="kart-liste">
+<div class="kart"><h3>Hızlı iş emri</h3><p>Plakayı yazın, yapılan işlemleri listeden seçin, fiyatı girin. Kayıt bir dakikada hazır.</p></div>
+<div class="kart"><h3>QR etiket</h3><p>Her araca QR etiket basın. Okutunca usta iş emrini, müşteri ise aracının durumunu görür.</p></div>
+<div class="kart"><h3>Her cihazdan erişim</h3><p>Telefon, tablet ya da bilgisayar. Verileriniz sunucuda saklanır, her dükkânın kaydı ayrıdır.</p></div>
+<div class="kart"><h3>Yedek ve güvenlik</h3><p>Verinizi istediğiniz zaman yedek olarak indirin. Giriş şifreli, cihazlar kontrol altında.</p></div>
+</div></section>
+<section id="nasil" class="bant"><div class="w"><div>
+<h2 style="margin-bottom:0">Üç adımda çalışır</h2>
+<div class="adim"><b class="n">1</b><p style="margin:0"><strong>Araç gelir.</strong> Plaka ve müşteri bilgisi kaydedilir, QR etiket basılır.</p></div>
+<div class="adim"><b class="n">2</b><p style="margin:0"><strong>İş yapılır.</strong> İşlemler ve parçalar iş emrine eklenir, durum güncellenir.</p></div>
+<div class="adim"><b class="n">3</b><p style="margin:0"><strong>Teslim edilir.</strong> Ödeme işlenir; müşteri aracın durumunu QR ile kendisi görür.</p></div>
+</div><div class="tel"><img src="{{ url_for('static',filename='vitrin/qr-usta.png') }}" alt="Usta için QR ekranı" width="360" height="720" loading="lazy"><img src="{{ url_for('static',filename='vitrin/qr-musteri.png') }}" alt="Müşteri için QR sayfası" width="360" height="720" loading="lazy"></div></div></section>
+<section class="w sec"><h2>Sık sorulanlar</h2><div class="kart-liste" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+<div class="kart"><h3 style="font-size:18px">Kurulum gerekiyor mu?</h3><p>Hayır, siz bir şey kurmazsınız. Hesabınız açılınca telefondan ya da bilgisayardan tarayıcıyla girersiniz. Etiket yazıcısı kullanacaksanız onun kurulumunu da biz yaparız.</p></div>
+<div class="kart"><h3 style="font-size:18px">Verilerimi başka dükkân görür mü?</h3><p>Hayır. Her dükkânın kaydı ayrı tutulur.</p></div>
+<div class="kart"><h3 style="font-size:18px">Etiket yazıcım çalışır mı, boyutlar tutar mı?</h3><p>Büyük ihtimalle evet. USB ya da Bluetooth etiket yazıcınızın bağlantısını ve etiket boyutu ayarlarını biz yapar, deneme etiketini basıp kontrol ederiz. Yazıcı modelinizi bize yazmanız yeterli; uyum olup olmadığını önceden söyleriz.</p></div>
+</div></section>
+{% if eposta %}<section id="iletisim" class="w ilet"><div class="ilet-k"><div>
+<h2 style="margin-bottom:12px">Bize ulaşın</h2>
+<p style="margin:0 0 16px;font-size:17px;color:#33413a">Dükkânınız için hesap açtırmak, yazıcınızın uyumunu sormak ya da aklınıza takılan herhangi bir şey için bize yazın.</p>
+<a class="btn btn-p" href="mailto:{{ eposta }}">E-posta gönder</a>
+<p style="margin:12px 0 0;font-size:15px;color:#33413a">{{ eposta }}</p>
+</div><div class="kut"><strong style="font-size:17px">Yazarken şunları belirtin</strong><p>Dükkânınızın adı</p><p>Etiket yazıcınızın modeli (varsa)</p><p>Size ulaşabileceğimiz telefon numarası</p></div></div></section>{% endif %}
+</main>
+<footer><div class="w ft"><strong style="font-size:17px">Servis Defteri</strong><div><span>Sadece platform yöneticileri içindir</span>
+<a class="y" href="{{ url_for('yonetici_giris') }}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Platform yöneticisi girişi</a></div></div></footer>
+</body></html>

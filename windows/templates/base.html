@@ -50,7 +50,7 @@ body{background:#f1f5f9}
     <a class="btn btn-amber fw-bold" href="{{url_for('is_emirleri')}}#yeni">➕ Yeni İş Emri</a>
   </div>
   <div class="d-flex gap-2">
-    {% if eslesmeyen %}<a class="btn btn-warning fw-bold" href="{{url_for('eslesmeyen_kayitlar')}}" title="Dış sistemden gelen, eşleşmeyen kayıtlar">🔗 Eşleşmeyen <span class="badge text-bg-danger">{{eslesmeyen}}</span></a>{% endif %}
+    {% if eslesmeyen or ent_red7 %}<a class="btn {{ 'btn-warning' if eslesmeyen else 'btn-outline-light' }} fw-bold text-nowrap px-2" style="font-size:.88rem" href="{{url_for('eslesmeyen_kayitlar')}}" title="Dış sistemden gelen kayıtlar: karar bekleyenler ve reddedilenler"><span class="d-none d-sm-inline">🔗 </span>Dış sistem{% if eslesmeyen %} <span class="badge text-bg-danger">{{eslesmeyen}}</span>{% endif %}</a>{% endif %}
     <a class="btn btn-outline-warning {{'active' if ep=='eklediklerim'}}" href="{{url_for('eklediklerim')}}" title="Kendi eklediğim işlemler">⭐<span class="d-none d-sm-inline"> Eklediklerim</span></a>
     <a class="btn btn-outline-warning" href="{{url_for('istatistik')}}">📊<span class="d-none d-sm-inline"> İstatistik</span></a>
     <a class="btn btn-outline-info" href="{{url_for('anasayfa')}}" title="Müşterilerin gördüğü web sitesi">🌐<span class="d-none d-sm-inline"> Web Sitesi</span></a>
