@@ -16,6 +16,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install -r requirements.txt
+      - name: Kod denetimi (pyflakes)
+        run: pip install pyflakes && python -m pyflakes *.py
       - name: Testleri çalıştır
         run: |
           for t in tests/*.py; do echo "== $t"; python "$t" || exit 1; done

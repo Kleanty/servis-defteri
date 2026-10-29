@@ -70,5 +70,5 @@ r = subprocess.run([sys.executable, '-I', '-c', kod], capture_output=True, text=
 o = r.stdout
 k('bozuk dükkân varken uygulama başlar: ' + (r.stderr[-150:] if 'IMPORT_OK' not in o else ''), 'IMPORT_OK' in o and f'[{i1}]' in o)
 k('sağlam dükkân çalışmaya devam eder', 'SAGLAM 200' in o)
-k('bozuk dükkân 503 alır, diğerleri etkilenmez', 'BOZUK 503' in o and 'SAGLIK 200' in o)
+k('bozuk dükkân 503 alır, diğerleri etkilenmez, /saglik uyarır', 'BOZUK 503' in o and 'SAGLIK 503' in o)      # /saglik bozuk dükkânı da bildirir (uptime uyarısı)
 print(f'\n{ok} kontrol geçti, {fail} başarısız'); sys.exit(1 if fail else 0)

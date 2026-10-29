@@ -39,6 +39,14 @@ def _sirri_yukle():
             os.remove(yol)      # boş/yarım kalmış dosya: yeniden üret
         os.makedirs(os.path.dirname(yol),exist_ok=True); k=secrets.token_hex(32)
         fd=os.open(yol,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600); os.write(fd,k.encode()); os.close(fd); return k
+    except FileExistsError:                           # iki süreç aynı anda başladı: kazananın yazdığı anahtarı oku
+        for _ in range(20):
+            try:
+                with open(yol) as f: k=f.read().strip()
+                if k: return k
+            except OSError: pass
+            time.sleep(0.1)
+        return secrets.token_hex(32)
     except OSError: return secrets.token_hex(32)   # yazılamazsa geçici anahtar (oturumlar yeniden başlatmada düşer)
 SECRET_KEY=_sirri_yukle()
 def _hash_uret(sifre):
@@ -1249,6 +1257,8 @@ def eslesmeyen_islem(kayit_no,eylem):
         if eylem=='bagla':
             ie=request.form.get('is_emri_id',type=int); x=db.execute('SELECT id,arac_id,durum FROM is_emirleri WHERE id=?',(ie,)).fetchone() if ie else None
             if not x or x['durum']=='Tamamlandı': flash('Geçerli ve açık bir iş emri seç.','danger'); db.rollback(); return redirect(url_for('eslesmeyen_kayitlar'))
+            a=arac_bul(db,v.get('plaka','')) if v.get('plaka') else None
+            if not a or a['id']!=x['arac_id']: flash('Bu iş emri, kaydın plakasındaki araca ait değil; bağlanmadı.','danger'); db.rollback(); return redirect(url_for('eslesmeyen_kayitlar'))   # başka aracın iş emrinin verisi ezilmesin
             _ent_isle(db,x['id'],v,t); db.execute("UPDATE entegrasyon_kayit SET durum='eslesti',is_emri_id=?,arac_id=? WHERE kayit_no=?",(x['id'],x['arac_id'],kayit_no)); flash('İş emrine bağlandı.','success')
         elif eylem=='yeni':
             ie,arac_id,yeni=_ent_yeni_kayit(db,v,t); db.execute("UPDATE entegrasyon_kayit SET durum='yeni_acildi',is_emri_id=?,arac_id=?,yeni_arac=? WHERE kayit_no=?",(ie,arac_id,int(yeni),kayit_no)); flash('Yeni iş emri açıldı (etiket otomatik basılmadı; araç sayfasından basabilirsin).','success')
